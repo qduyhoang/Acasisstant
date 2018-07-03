@@ -1,15 +1,16 @@
 <?php
 require('DiffEngine.php');
 $my_diff_engine = new DiffEngine();
+$data_file_path = 'data/';
 //Get data from existing json file
-$data_file = file_get_contents('data.json');
+$data_file = file_get_contents($data_file_path . 'data.json');
 // converts json data into array
 $json_file = json_decode($data_file, true);
 
 $deleted= array();
 $added = array();
-$file = fopen('final_data.json', 'a');
-echo count($json_file);
+$file = fopen($data_file_path . 'final_data.json', 'a');
+
 for ($i = 1; $i < count($json_file); $i++) {
 	$from_lines = preg_split('/[\ \n\,]+/', $json_file["$i"]);
 	$k = $i + 1;

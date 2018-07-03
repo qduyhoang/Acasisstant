@@ -8,9 +8,11 @@ import sys
 import shutil
 import os
 import subprocess
+from tqdm import tqdm
 
 
 def retrieveData(baseURL = "https://dumps.wikimedia.org/enwiki/latest/"):
+	file_path = 'data/'
 	chunk_size = 4096
 	#Get html content
 	html_page = urllib.request.urlopen(baseURL)
@@ -24,7 +26,7 @@ def retrieveData(baseURL = "https://dumps.wikimedia.org/enwiki/latest/"):
 	for file_name in file_names:
 		if file_name == 'enwiki-latest-abstract11.xml.gz':
 			out_file_path = file_name[:-3]
-			with gzip.open(file_name, 'wb') as compressed_file:
+			with gzip.open(file_path+file_name, 'wb') as compressed_file:
 				#Download gzip file
 				response = urllib.request.urlopen(baseURL + file_name)
 				#Save file
@@ -43,20 +45,23 @@ def retrieveData(baseURL = "https://dumps.wikimedia.org/enwiki/latest/"):
 						sys.stdout.write("==========Decompressing===========")    
 						sys.stdout.flush()
 						break
-				
-			with gzip.open(file_name) as compressed_file:
+			#Decompress file and save
+			with gzip.open(file_path+file_name) as compressed_file:
 				file_content = gzip.decompress(compressed_file.read())
-				with open(out_file_path, 'wb') as out_file:
+				with open(file_path+out_file_path, 'wb') as out_file:
 					out_file.write(file_content)
 			#Delete compressed file after done
-			os.remove(file_name)
+			os.remove(file_path+file_name)
 
 def processData(file_name):
-	tree = ET.parse(file_name)
+	file_path = 'data/'
+	tree = ET.parse(file_path+file_name)
 	#Get root tag <page>
 	root = tree.getroot()[1]	
 	file_start = '{http://www.mediawiki.org/xml/export-0.10/}'
 	data = {}
+
+	#Get text content of all revision and store revision number
 	i = 1
 	for revision in root.iter(file_start+'revision'):
 		text = revision.find(file_start+'text').text
@@ -64,17 +69,17 @@ def processData(file_name):
 			data[i] = text
 			i += 1
 	#Write a new file with filtered data as json format
-	with open('data.json', 'w') as data_file:
+	with open(file_path+'data.json', 'w') as data_file:
 		json.dump(data, data_file, indent = 4)
-	os.remove(file_name)
+	os.remove(file_path+file_name)
 
 if __name__ == '__main__':
-	# retrieveData()
-	processData('Wikipedia-20180703050621.xml')
+	retrieveData()
+	processData('enwiki-latest-abstract11.xml')
 	# call php script
 
 	result = subprocess.run(
-	    ['php', 'main.php'],    # program and arguments
+	    ['php', 'compare/compare.php'],    # program and arguments
 	    check=True               # raise exception if program fails
 	)
 
