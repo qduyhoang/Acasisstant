@@ -12,8 +12,7 @@ from tqdm import tqdm
 import math
 
 
-def retrieveData(baseURL = "https://dumps.wikimedia.org/enwiki/latest/"):
-	file_path = 'data/'
+def retrieveData(file_path = 'data/', baseURL = "https://dumps.wikimedia.org/enwiki/latest/"):
 	#Get html content and convert to string
 	html_page = requests.get(baseURL).text
 	#Get history files'name
@@ -28,24 +27,49 @@ def retrieveData(baseURL = "https://dumps.wikimedia.org/enwiki/latest/"):
 			with gzip.open(file_path+file_name, 'wb') as compressed_file:
 				# Total size in bytes.
 				file_size = int(response.headers.get('content-length', 0));
-				block_size = 4096
-				bytes_so_far = 0
+				block_size = 1024
 				#Write gzip response to a new file and show progress bar
 				for data in tqdm(response.iter_content(block_size), total=math.ceil(file_size//block_size) , unit='KB', unit_scale=True):
-					bytes_so_far += len(data)
 					compressed_file.write(data)
+	return file_names
 
-			#Decompress file and save
-			with gzip.open(file_path+file_name) as compressed_file:
-				file_content = gzip.decompress(compressed_file.read())
-				out_file_path = file_name[:-3]
-				with open(file_path+out_file_path, 'wb') as out_file:
-					out_file.write(file_content)
-			#Delete compressed file after done
-			os.remove(file_path+file_name)
+def uncompressData(file_path, compressed_file_list):
+	# Preprocess the total files sizes
+	sizecounter = 0
+	for cur_path, directories, files in tqdm(os.walk(file_path), unit="files"):
+		for file in files:
+			if file in compressed_file_list:	
+				sizecounter += os.path.getsize(cur_path)
+
+	# Load tqdm with size counter instead of file counter
+	with tqdm(total = sizecounter, unit = 'B', unit_scale = True, unit_divisor = 1024) as progressBar:
+		compressed_file_exist = False
+		#Search compressed files
+		for cur_path, directories, files in tqdm(os.walk(file_path), unit="files"):
+			for file in files:
+				if file in compressed_file_list:	
+					compressed_file_exist = True
+					out_file_name = file[:-3]
+					with gzip.open(cur_path+file, 'rb') as compressed_file:
+						with open(cur_path+out_file_name, 'wb') as uncompressed_file:
+							buf = 1
+							while buf:
+								#Decompress file and save
+								buf = gzip.decompress(compressed_file.read())
+								uncompressed_file.write(buf)
+							if buf:
+								progressBar.set_postfix(file=filepath[-10:], refresh=False)
+								progressBar.update(len(buf))
+					#Delete compressed file after uncompressing
+					os.remove(cur_path+file)
+		if compressed_file_exist:
+			print('Files uncompressed')
+		else:
+			print('Nothing to uncompress')
+
 
 def processData(file_name):
-	file_path = 'data/'
+	file_path = 'data'
 	tree = ET.parse(file_path+file_name)
 	#Get root tag <page>
 	root = tree.getroot()[1]	
@@ -65,12 +89,12 @@ def processData(file_name):
 	os.remove(file_path+file_name)
 
 if __name__ == '__main__':
-	retrieveData()
-	processData('enwiki-latest-abstract11.xml')
+	compressed_file_list = retrieveData()
+	# processData('enwiki-latest-abstract11.xml')
 	# call php script
-
-	result = subprocess.run(
-	    ['php', 'compare/compare.php'],    # program and arguments
-	    check=True               # raise exception if program fails
-	)
+	uncompressData('data/', ['enwiki-latest-abstract11.xml.gz'])
+	# result = subprocess.run(
+	#     ['php', 'compare/compare.php'],    # program and arguments
+	#     check=True               # raise exception if program fails
+	# )
 
