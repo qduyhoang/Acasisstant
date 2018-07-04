@@ -60,7 +60,7 @@ class DiffEngine {
 	public $removed;
 	public $added;
 	public $heuristicUsed;
-	function __construct( $tooLong = 2000000, $powLimit = 2 ) {
+	function __construct( $tooLong = 5000000, $powLimit = 4 ) {
 		$this->tooLong = $tooLong;
 		$this->powLimit = $powLimit;
 	}

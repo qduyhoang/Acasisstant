@@ -12,24 +12,22 @@ from tqdm import tqdm
 import math
 
 
-def getTotalFileSize(file_path, file_names_list):
+def getTotalFileSize(file_path, file_name_pattern):
 	sizecounter = 0
 	for cur_path, directories, files in tqdm(os.walk(file_path), unit="files"):
-		for file in files:
-			if file in file_names_list:	
+		for file_name in files:
+			if file_name_pattern.match(file_name):
 				sizecounter += os.path.getsize(cur_path)
 	return sizecounter
 
-def retrieveData(file_path = 'data/', baseURL = "https://dumps.wikimedia.org/enwiki/latest/"):
+def retrieveData(file_name_pattern, file_path = 'data/', baseURL = "https://dumps.wikimedia.org/enwiki/latest/"):
 	#Get html content and convert to string
 	html_page = requests.get(baseURL).text
-	#Get history files'name
-	pattern = re.compile('enwiki-latest-stub-meta-history[0-9]{0,3}.xml.gz')  #Replace this small file for testing purpose
-	result = pattern.findall(html_page)											  #enwiki-latest-abstract11.xml.gz  
-	#Filter overlapping results												  #original: 'enwiki-latest-stub-meta-history[0-9]{0,3}.xml.gz'
+	result = file_name_pattern.findall(html_page)											 
+	#Filter overlapping results												 
 	file_names = set(result)
 	for file_name in file_names:
-		if file_name == 'enwiki-latest-stub-meta-history1.xml.gz':
+		if file_name == 'enwiki-latest-abstract11.xml.gz':
 			#Download gzip file
 			response = requests.get(baseURL + file_name, stream = True)
 			with gzip.open(file_path+file_name, 'wb') as compressed_file:
@@ -39,14 +37,13 @@ def retrieveData(file_path = 'data/', baseURL = "https://dumps.wikimedia.org/enw
 				#Write gzip response to a new file and show progress bar
 				for data in tqdm(response.iter_content(block_size), total=math.ceil(file_size//block_size) , unit='KB', unit_scale=True):
 					compressed_file.write(data)
-	return file_names
 
-def uncompressData(compressed_file_list, file_path = 'data/'):
+def uncompressData(file_name_pattern, file_path = 'data/'):
 	# Preprocess the total files sizes
-	sizecounter = getTotalFileSize(file_path, compressed_file_list)
+	sizecounter = getTotalFileSize(file_path, file_name_pattern)
 	for cur_path, directories, files in tqdm(os.walk(file_path), unit="files"):
-		for file in files:
-			if file in compressed_file_list:	
+		for file_name in files:
+			if file_name_pattern.match(file_name):
 				sizecounter += os.path.getsize(cur_path)
 
 	# Show progress using file size
@@ -54,11 +51,11 @@ def uncompressData(compressed_file_list, file_path = 'data/'):
 		compressed_file_exist = False
 		#Search compressed files
 		for cur_path, directories, files in tqdm(os.walk(file_path), unit="files"):
-			for file in files:
-				if file in compressed_file_list:	
+			for file_name in files:
+				if file_name_pattern.match(file_name):	
 					compressed_file_exist = True
-					out_file_name = file[:-3]
-					with gzip.open(cur_path+file, 'rb') as compressed_file:
+					out_file_name = file_name[:-3]
+					with gzip.open(cur_path+file_name, 'rb') as compressed_file:
 						with open(cur_path+out_file_name, 'wb') as uncompressed_file:
 							buf = 1
 							while buf:
@@ -69,47 +66,50 @@ def uncompressData(compressed_file_list, file_path = 'data/'):
 								progressBar.set_postfix(file=filepath[-10:], refresh=False)
 								progressBar.update(len(buf))
 					#Delete compressed file after uncompressing
-					os.remove(cur_path+file)
+					os.remove(cur_path+file_name)
 		if compressed_file_exist:
 			print('Files uncompressed')
 		else:
 			print('Nothing to uncompress')
 
 
-def processData(uncompressed_file_list, file_path = 'data/'):
-	# Preprocess the total files sizes
-	sizecounter = getTotalFileSize(file_path, uncompressed_file_list)
-
-	# Show progress using file size
-	with tqdm(total = sizecounter, unit = 'B', unit_scale = True, unit_divisor = 1024) as progressBar:
-		#Search uncompressed files
-		for cur_path, directories, files in tqdm(os.walk(file_path), unit="files"):
-			for file_name in files:
-				if file_name in uncompressed_file_list:
-					tree = ET.parse(cur_path+file_name)
-					#Get root tag <page>
-					root = tree.getroot()[1]
-					file_start = '{http://www.mediawiki.org/xml/export-0.10/}'
-					data = {}
-					#Get text content of all revision and store revision number
-					i = 1
-					for revision in root.iter(file_start+'revision'):
-						text = revision.find(file_start+'text').text
-						if text != None:
-							data[i] = text
-							i += 1
-					#Write a new file with filtered data as json format
-					json_file_name = file_name[:-3] + 'json'
-					with open(file_path+json_file_name, 'w') as data_file:
-						json.dump(data, data_file, indent = 4)
-					#Delete uncompressed after finish processing
-					os.remove(cur_path+file_name)
+#Retrieve content from xml files
+def processData(file_name_pattern, file_path = 'data/'):
+	#Search uncompressed files
+	for cur_path, directories, files in os.walk(file_path):
+		for file_name in files:
+			if file_name_pattern.match(file_name):
+				print(file_name, ' processing')
+				tree = ET.parse(cur_path+file_name)
+				#Get root tag <page>
+				root = tree.getroot()[1]
+				file_start = '{http://www.mediawiki.org/xml/export-0.10/}'
+				data = {}
+				#Get text content of all revision and store revision number
+				i = 1
+				for revision in root.iter(file_start+'revision'):
+					text = revision.find(file_start+'text').text
+					if text != None:
+						data[i] = text
+						i += 1
+				#Write a new file with filtered data as json format
+				json_file_name = file_name[:-3] + 'json'
+				with open(file_path+json_file_name, 'w') as data_file:
+					json.dump(data, data_file, indent = 4)
+				#Delete uncompressed after finish processing
+				os.remove(cur_path+file_name)
+				print(file_name, ' processed')
 
 if __name__ == '__main__':
-	# compressed_file_list = retrieveData()
-	processData(['Wikipedia-20180704191642.xml'])
-	# call php script
-	# uncompressData('data/', ['enwiki-latest-abstract11.xml.gz'])
+	#what we need: 'enwiki-latest-stub-meta-history[0-9]{0,3}.xml.gz'
+	raw_file_pattern = re.compile('enwiki-latest-abstract11.xml.gz')
+	uncompressed_file_pattern = re.compile('Wikipedia-20180704195134.xml')
+	initial_processed_file_pattern = re.compile('enwiki-latest-stub-meta-history[0-9]{0,3}.json')
+
+	#retrieveData(raw_file_pattern)
+	# uncompressData(raw_file_pattern)
+	processData(uncompressed_file_pattern)
+	#call php script
 	result = subprocess.run(
 	    ['php', 'compare/compare.php'],    # program and arguments
 	    check=True               # raise exception if program fails
