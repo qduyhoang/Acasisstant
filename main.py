@@ -99,18 +99,19 @@ def processData(uncompressed_file_list, file_path = 'data/'):
 							data[i] = text
 							i += 1
 					#Write a new file with filtered data as json format
-					with open(file_path+'data.json', 'w') as data_file:
+					json_file_name = file_name[:-3] + 'json'
+					with open(file_path+json_file_name, 'w') as data_file:
 						json.dump(data, data_file, indent = 4)
 					#Delete uncompressed after finish processing
 					os.remove(cur_path+file_name)
 
 if __name__ == '__main__':
 	# compressed_file_list = retrieveData()
-	processData(['Wikipedia-20180704184417.xml'])
+	processData(['Wikipedia-20180704191642.xml'])
 	# call php script
 	# uncompressData('data/', ['enwiki-latest-abstract11.xml.gz'])
-	# result = subprocess.run(
-	#     ['php', 'compare/compare.php'],    # program and arguments
-	#     check=True               # raise exception if program fails
-	# )
+	result = subprocess.run(
+	    ['php', 'compare/compare.php'],    # program and arguments
+	    check=True               # raise exception if program fails
+	)
 
