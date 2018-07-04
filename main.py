@@ -74,7 +74,8 @@ def uncompressData(file_name_pattern, file_path = 'data/unprocessed/'):
 
 
 #Retrieve content from xml files
-def processData(file_name_pattern, file_path = 'data/unprocessed/'):
+def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_formatting = False):
+	category_pattern = re.compile('\[\[Category:(.*?)\]\]')
 	#Search uncompressed files
 	for cur_path, directories, files in os.walk(file_path):
 		for file_name in files:
@@ -90,7 +91,11 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/'):
 				for revision in root.iter(file_start+'revision'):
 					text = revision.find(file_start+'text').text
 					if text != None:
-						data[i] = text
+						if remove_formatting:
+							text = re.sub(r'\[[^[]].*\]', '', text)
+						category = category_pattern.findall(text)
+						print(category)
+						data[i] = text, category
 						i += 1
 				#Write a new file with filtered data as json format
 				json_file_name = file_name[:-3] + 'json'
@@ -103,11 +108,11 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/'):
 if __name__ == '__main__':
 	#what we need: 'enwiki-latest-stub-meta-history[0-9]{0,3}.xml.gz'
 	compressed_file_pattern = re.compile('enwiki-latest-abstract11.xml.gz')
-	unprocessed_file_pattern = re.compile('Wikipedia-20180704195830.xml')
+	unprocessed_file_pattern = re.compile('wiki.xml')
 
 	#retrieveData(compressed_file_pattern)
 	# uncompressData(compressed_file_pattern)
-	processData(unprocessed_file_pattern)
+	processData(unprocessed_file_pattern, remove_formatting = True)
 	#call php script
 	result = subprocess.run(
 	    ['php', 'compare/compare.php'],    # program and arguments

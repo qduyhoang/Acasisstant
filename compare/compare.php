@@ -16,9 +16,9 @@ foreach ($dir as $fileinfo) {
 		$file = fopen($processed_data_path . 'processed_' . $fileinfo->getFilename(), 'a');
 
 		for ($i = 1; $i < count($json_file); $i++) {
-			$from_lines = preg_split('/[\ \n\,]+/', $json_file["$i"]);
+			$from_lines = preg_split('/[\ \n\,]+/', $json_file["$i"][0]);
 			$k = $i + 1;
-			$to_lines = preg_split('/[\ \n\,]+/', $json_file["$k"]);
+			$to_lines = preg_split('/[\ \n\,]+/', $json_file["$k"][0]);
 			$results = $my_diff_engine->diff($from_lines, $to_lines);
 			foreach ($results as $object) {
 				//Group all deleted and added parts
@@ -43,7 +43,7 @@ foreach ($dir as $fileinfo) {
 			};
 			if (isset($deleted) || isset($added)){
 					//Create updated json file
-					$updated_data = json_encode(array('original' => $json_file["$i"], 'deleted' => $deleted, 'added' => $added),JSON_PRETTY_PRINT);
+					$updated_data = json_encode(array('original' => $json_file["$i"][0], 'category' => $json_file["$i"][1], 'deleted' => $deleted, 'added' => $added),JSON_PRETTY_PRINT);
 					
 					//Write to a new file
 					fwrite($file, $updated_data);
