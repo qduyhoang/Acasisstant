@@ -1,13 +1,13 @@
 <?php
 require('DiffEngine.php');
 $my_diff_engine = new DiffEngine();
-$data_file_path = 'data/';
+$unprocessed_data_path = 'data/unprocessed/';
 $processed_data_path = 'data/processed/';
 //Get data from existing json file
-$dir = new DirectoryIterator($data_file_path);
+$dir = new DirectoryIterator($unprocessed_data_path);
 foreach ($dir as $fileinfo) {
     if (!$fileinfo->isDot()) {
-        $data_file = file_get_contents($data_file_path . $fileinfo->getFilename());
+        $data_file = file_get_contents($unprocessed_data_path . $fileinfo->getFilename());
 		// converts json data into array
 		$json_file = json_decode($data_file, true);
 

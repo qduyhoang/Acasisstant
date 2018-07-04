@@ -309,7 +309,7 @@ class DiffEngine {
 			if ( $this->m * $this->n > $this->tooLong ) {
 				// limit complexity to D^POW_LIMIT for long sequences
 				$this->maxDifferences = floor( $this->maxDifferences ** ( $this->powLimit - 1.0 ) );
-				print( "Limiting max number of differences to $this->maxDifferences\n" );
+				// print( "Limiting max number of differences to $this->maxDifferences\n" );
 			}
 			/*
 			 * The common prefixes and suffixes are always part of some LCS, include

@@ -20,7 +20,7 @@ def getTotalFileSize(file_path, file_name_pattern):
 				sizecounter += os.path.getsize(cur_path)
 	return sizecounter
 
-def retrieveData(file_name_pattern, file_path = 'data/', baseURL = "https://dumps.wikimedia.org/enwiki/latest/"):
+def retrieveData(file_name_pattern, file_path = 'data/unprocessed/', baseURL = "https://dumps.wikimedia.org/enwiki/latest/"):
 	#Get html content and convert to string
 	html_page = requests.get(baseURL).text
 	result = file_name_pattern.findall(html_page)											 
@@ -38,7 +38,7 @@ def retrieveData(file_name_pattern, file_path = 'data/', baseURL = "https://dump
 				for data in tqdm(response.iter_content(block_size), total=math.ceil(file_size//block_size) , unit='KB', unit_scale=True):
 					compressed_file.write(data)
 
-def uncompressData(file_name_pattern, file_path = 'data/'):
+def uncompressData(file_name_pattern, file_path = 'data/unprocessed/'):
 	# Preprocess the total files sizes
 	sizecounter = getTotalFileSize(file_path, file_name_pattern)
 	for cur_path, directories, files in tqdm(os.walk(file_path), unit="files"):
@@ -74,7 +74,7 @@ def uncompressData(file_name_pattern, file_path = 'data/'):
 
 
 #Retrieve content from xml files
-def processData(file_name_pattern, file_path = 'data/'):
+def processData(file_name_pattern, file_path = 'data/unprocessed/'):
 	#Search uncompressed files
 	for cur_path, directories, files in os.walk(file_path):
 		for file_name in files:
@@ -102,13 +102,12 @@ def processData(file_name_pattern, file_path = 'data/'):
 
 if __name__ == '__main__':
 	#what we need: 'enwiki-latest-stub-meta-history[0-9]{0,3}.xml.gz'
-	raw_file_pattern = re.compile('enwiki-latest-abstract11.xml.gz')
-	uncompressed_file_pattern = re.compile('Wikipedia-20180704195134.xml')
-	initial_processed_file_pattern = re.compile('enwiki-latest-stub-meta-history[0-9]{0,3}.json')
+	compressed_file_pattern = re.compile('enwiki-latest-abstract11.xml.gz')
+	unprocessed_file_pattern = re.compile('Wikipedia-20180704195830.xml')
 
-	#retrieveData(raw_file_pattern)
-	# uncompressData(raw_file_pattern)
-	processData(uncompressed_file_pattern)
+	#retrieveData(compressed_file_pattern)
+	# uncompressData(compressed_file_pattern)
+	processData(unprocessed_file_pattern)
 	#call php script
 	result = subprocess.run(
 	    ['php', 'compare/compare.php'],    # program and arguments
