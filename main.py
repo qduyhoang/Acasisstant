@@ -75,7 +75,8 @@ def uncompressData(file_name_pattern, file_path = 'data/unprocessed/'):
 
 #Retrieve content from xml files
 def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_formatting = False):
-	category_pattern = re.compile('\[\[Category:(.*?)\]\]')
+	#Content of category
+	category_content_pattern = re.compile('\[\[Category:(.*?)\]\]')
 	#Search uncompressed files
 	for cur_path, directories, files in os.walk(file_path):
 		for file_name in files:
@@ -91,10 +92,17 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_forma
 				for revision in root.iter(file_start+'revision'):
 					text = revision.find(file_start+'text').text
 					if text != None:
+						#Get categories of the current revision
+						category = category_content_pattern.findall(text)
 						if remove_formatting:
-							text = re.sub(r'\[[^[]].*\]', '', text)
-						category = category_pattern.findall(text)
-						print(category)
+							#Remove infoboxes, categories, images
+							text = re.sub(r'\{\{.*?\}\}|\[\[\s*Category:.*?\]\]|\[\[\s*Image:.*?\]\]','',text, flags=re.DOTALL)
+							#Remove html tags
+							text = re.sub(r'<[^<]+?>', '', text)
+							#Remove links
+							text =re.sub(r'(?<!\[)\[[^\[\]]+\]', '', text)
+							#Remove double square brackets
+							text = re.sub(r'(\[\[)(.+?)(\]\])', r'\2', text)
 						data[i] = text, category
 						i += 1
 				#Write a new file with filtered data as json format
@@ -107,15 +115,14 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_forma
 
 if __name__ == '__main__':
 	#what we need: 'enwiki-latest-stub-meta-history[0-9]{0,3}.xml.gz'
-	compressed_file_pattern = re.compile('enwiki-latest-abstract11.xml.gz')
+	# compressed_file_pattern = re.compile('enwiki-latest-abstract11.xml.gz')
 	unprocessed_file_pattern = re.compile('wiki.xml')
 
-	#retrieveData(compressed_file_pattern)
-	# uncompressData(compressed_file_pattern)
+	# #retrieveData(compressed_file_pattern)
+	# # uncompressData(compressed_file_pattern)
 	processData(unprocessed_file_pattern, remove_formatting = True)
 	#call php script
 	result = subprocess.run(
 	    ['php', 'compare/compare.php'],    # program and arguments
 	    check=True               # raise exception if program fails
 	)
-
