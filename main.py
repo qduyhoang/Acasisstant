@@ -128,12 +128,13 @@ def stripFormatting(text):
 	text = re.sub(r'\[\[\s*Category:.*?\]\]|\[\[\s*Image:.*?\]\]','',text, flags=re.DOTALL)
 	#Remove all links in single square brackets
 	# text =re.sub(r'(?<!\[)\[[^\[\]]+\]', '', text, flags = re.DOTALL)
-	#Remove everything after External links
-	text =re.sub('==External links==.*', '', text, flags = re.DOTALL)
+	#Remove everything after External links/Links sections
+	text =re.sub('==External [L|l]inks==.*|====Links====.*', '', text, flags = re.DOTALL)
+
 	#Remove double square brackets
 	text = re.sub(r'(\[\[)(.+?)(\]\])', r'\2', text)
 	#Remove new line characters
-	text = text.replace('\n', '')
+	text = text.replace('\n', ' ')
 	return text
 
 
@@ -146,7 +147,7 @@ if __name__ == '__main__':
 	# # uncompressData(compressed_file_pattern)
 	processData(unprocessed_file_pattern, remove_formatting = True)
 	#call php script
-	# result = subprocess.run(
-	#     ['php', 'compare/compare.php'],    # program and arguments
-	#     check=True               # raise exception if program fails
-	# )
+	result = subprocess.run(
+	    ['php', 'compare/compare.php'],    # program and arguments
+	    check=True               # raise exception if program fails
+	)
