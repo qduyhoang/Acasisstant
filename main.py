@@ -10,6 +10,8 @@ import os
 import subprocess
 from tqdm import tqdm
 import math
+from bs4 import BeautifulSoup
+import exec_time
 
 
 def getTotalFileSize(file_path, file_name_pattern):
@@ -95,14 +97,7 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_forma
 						#Get categories of the current revision
 						category = category_content_pattern.findall(text)
 						if remove_formatting:
-							#Remove infoboxes, categories, images
-							text = re.sub(r'\{\{.*?\}\}|\[\[\s*Category:.*?\]\]|\[\[\s*Image:.*?\]\]','',text, flags=re.DOTALL)
-							#Remove html tags
-							text = re.sub(r'<[^<]+?>', '', text)
-							#Remove links
-							text =re.sub(r'(?<!\[)\[[^\[\]]+\]', '', text)
-							#Remove double square brackets
-							text = re.sub(r'(\[\[)(.+?)(\]\])', r'\2', text)
+							text = stripFormatting(text)
 						data[i] = text, category
 						i += 1
 				#Write a new file with filtered data as json format
@@ -113,6 +108,28 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_forma
 				os.remove(cur_path+file_name)
 				print(file_name, ' processed')
 
+
+def stripFormatting(text):
+	#Use HTML parser to remove html tags and content inside them
+	soup = BeautifulSoup(text, 'html.parser')
+	for html in soup.find_all():
+		if html.name == 'ref':
+			if len(html.contents) != 0:
+				pass	
+		html.decompose()
+	text = soup.text
+
+	#Remove categories, images tags and their content
+	text = re.sub(r'\[\[\s*Category:.*?\]\]|\[\[\s*Image:.*?\]\]','',text, flags=re.DOTALL)
+	#Remove links
+	text =re.sub(r'(?<!\[)\[[^\[\]]+\]', '', text)
+	#Remove double square brackets
+	text = re.sub(r'(\[\[)(.+?)(\]\])', r'\2', text)
+	#Remove new line characters
+	text = text.replace('\n', '')
+	return text
+
+
 if __name__ == '__main__':
 	#what we need: 'enwiki-latest-stub-meta-history[0-9]{0,3}.xml.gz'
 	# compressed_file_pattern = re.compile('enwiki-latest-abstract11.xml.gz')
@@ -122,7 +139,7 @@ if __name__ == '__main__':
 	# # uncompressData(compressed_file_pattern)
 	processData(unprocessed_file_pattern, remove_formatting = True)
 	#call php script
-	result = subprocess.run(
-	    ['php', 'compare/compare.php'],    # program and arguments
-	    check=True               # raise exception if program fails
-	)
+	# result = subprocess.run(
+	#     ['php', 'compare/compare.php'],    # program and arguments
+	#     check=True               # raise exception if program fails
+	# )
