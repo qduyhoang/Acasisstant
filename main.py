@@ -118,6 +118,10 @@ def stripFormatting(text):
 				pass	
 		html.decompose()
 	text = soup.text
+	#Remove infoboxes: Removing all content of nested {{ }}
+	n = 1  # run at least once
+	while n:
+		text, n = re.subn(r'\{\{[^{}]*\}\}', '', text)  # remove non-nested/flat balanced parts
 
 	#Remove categories, images tags and their content
 	text = re.sub(r'\[\[\s*Category:.*?\]\]|\[\[\s*Image:.*?\]\]','',text, flags=re.DOTALL)
