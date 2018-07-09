@@ -118,6 +118,7 @@ def stripFormatting(text):
 				pass	
 		html.decompose()
 	text = soup.text
+
 	#Remove infoboxes: Removing all content of nested {{ }}
 	n = 1  # run at least once
 	while n:
@@ -125,8 +126,10 @@ def stripFormatting(text):
 
 	#Remove categories, images tags and their content
 	text = re.sub(r'\[\[\s*Category:.*?\]\]|\[\[\s*Image:.*?\]\]','',text, flags=re.DOTALL)
-	#Remove links
-	text =re.sub(r'(?<!\[)\[[^\[\]]+\]', '', text)
+	#Remove all links in single square brackets
+	# text =re.sub(r'(?<!\[)\[[^\[\]]+\]', '', text, flags = re.DOTALL)
+	#Remove everything after External links
+	text =re.sub('==External links==.*', '', text, flags = re.DOTALL)
 	#Remove double square brackets
 	text = re.sub(r'(\[\[)(.+?)(\]\])', r'\2', text)
 	#Remove new line characters
