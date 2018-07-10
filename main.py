@@ -132,7 +132,7 @@ def stripFormatting(text):
 	#Remove all links in single square brackets
 	# text =re.sub(r'(?<!\[)\[[^\[\]]+\]', '', text, flags = re.DOTALL)
 	#Remove everything after External links/Links sections
-	text =re.sub('==External [L|l]inks==.*|====Links====.*', '', text, flags = re.DOTALL)
+	text =re.sub('==External [L|l]inks==.*|====[L|l]inks====.*', '', text, flags = re.DOTALL)
 
 	#Remove double square brackets
 	text = re.sub(r'(\[\[)(.+?)(\]\])', r'\2', text)

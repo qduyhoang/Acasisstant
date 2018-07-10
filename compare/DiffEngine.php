@@ -101,11 +101,13 @@ class DiffEngine {
 			// Find deletes & adds.
 			$delete = [];
 			while ( $xi < $n_from && $this->removed[$xi] ) {
-				$delete[] = [$from_lines[$xi++], $xi];
+				// return both content and index
+				// $delete[] = [$from_lines[$xi++], $xi];
+				$delete[] = $xi++;
 			}
 			$add = [];
 			while ( $yi < $n_to && $this->added[$yi] ) {
-				$add[] = [$to_lines[$yi++], $yi];
+				$add[] = [$yi, $to_lines[$yi++]];
 			}
 			if ( $delete && $add ) {
 				$edits[] = new DiffOpChange( $delete, $add );

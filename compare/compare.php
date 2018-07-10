@@ -12,8 +12,6 @@ foreach ($dir as $fileinfo) {
 		$json_file = json_decode($data_file, true);
 
 		$deleted= array();
-		$num = count($deleted);
-		echo "$num<br>";
 		$added = array();
 		$file = fopen($processed_data_path . 'processed_' . $fileinfo->getFilename(), 'a');
 
@@ -48,7 +46,7 @@ foreach ($dir as $fileinfo) {
 			};
 			if (count($deleted) > 0 || count($added) > 0){
 				//Create updated json file
-				$updated_data = json_encode(array('original' => $json_file["$i"][0], 'category' => $json_file["$i"][1], 'deleted' => $deleted, 'added' => $added),JSON_PRETTY_PRINT);
+				$updated_data = json_encode(array('original' => $json_file["$i"][0], 'category' => $json_file["$i"][1], 'references' => $json_file["$i"][2], 'deleted' => $deleted, 'added' => $added),JSON_PRETTY_PRINT);
 				
 				//Write to a new file
 				fwrite($file, $updated_data);

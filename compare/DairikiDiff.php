@@ -45,6 +45,10 @@ abstract class DiffOp {
 	/**
 	 * @var string[]
 	 */
+	public $index;
+	/**
+	 * @var int[]
+	 */
 	public $closing;
 	/**
 	 * @return string
@@ -120,8 +124,8 @@ class DiffOpCopy extends DiffOp {
  */
 class DiffOpDelete extends DiffOp {
 	public $type = 'delete';
-	public function __construct( $lines ) {
-		$this->orig = $lines;
+	public function __construct( $index ) {
+		$this->origin = $index;
 		$this->closing = false;
 	}
 	/**
@@ -146,7 +150,7 @@ class DiffOpDelete extends DiffOp {
  */
 class DiffOpAdd extends DiffOp {
 	public $type = 'add';
-	public function __construct( $lines ) {
+	public function __construct($lines ) {
 		$this->closing = $lines;
 		$this->orig = false;
 	}
