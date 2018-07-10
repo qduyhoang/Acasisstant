@@ -97,8 +97,8 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_forma
 						#Get categories of the current revision
 						category = category_content_pattern.findall(text)
 						if remove_formatting:
-							text = stripFormatting(text)
-						data[i] = text, category
+							text, refs = stripFormatting(text)
+						data[i] = text, category, refs
 						i += 1
 				#Write a new file with filtered data as json format
 				json_file_name = file_name[:-3] + 'json'
@@ -110,12 +110,14 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_forma
 
 
 def stripFormatting(text):
+	refs = [] #Store references
 	#Use HTML parser to remove html tags and content inside them
 	soup = BeautifulSoup(text, 'html.parser')
 	for html in soup.find_all():
+		#retrieve references from <ref> tags
 		if html.name == 'ref':
-			if len(html.contents) != 0:
-				pass	
+			if len(html.contents) != 0:    #if reference is not empty
+				refs.append(html.contents)
 		html.decompose()
 	text = soup.text
 
@@ -135,9 +137,12 @@ def stripFormatting(text):
 	text = re.sub(r'(\[\[)(.+?)(\]\])', r'\2', text)
 	#Remove new line characters
 	text = text.replace('\n', ' ')
+	#Remove backslash characters
+	# text = text.replace('\\', '')
 	#Remove apostrophe when they are not used to show possession
 	text = re.sub("(?<!s)'(?!(?:t|ll|e?m)\b)", '', text)
-	return text
+	#Return stripped formatting text and references 
+	return text, refs
 
 
 if __name__ == '__main__':
