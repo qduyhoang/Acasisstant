@@ -117,7 +117,8 @@ def stripFormatting(text):
 		#retrieve references from <ref> tags
 		if html.name == 'ref':
 			if len(html.contents) != 0:    #if reference is not empty
-				refs.append(html.contents)
+				for ref in html.contents:
+					refs.append(ref)
 		html.decompose()
 	text = soup.text
 
