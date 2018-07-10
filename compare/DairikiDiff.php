@@ -107,6 +107,9 @@ class DiffOpCopy extends DiffOp {
 	public function reverse() {
 		return new DiffOpCopy( $this->closing, $this->orig );
 	}
+	public function isEmpty(){
+		return false;
+	}
 }
 /**
  * Extends DiffOp. Used to mark strings that have been
@@ -126,6 +129,12 @@ class DiffOpDelete extends DiffOp {
 	 */
 	public function reverse() {
 		return new DiffOpAdd( $this->orig );
+	}
+	public function isEmpty(){
+		if (count($origin) == 0){
+			return true;
+		} 
+		return false;
 	}
 }
 /**
@@ -147,6 +156,12 @@ class DiffOpAdd extends DiffOp {
 	public function reverse() {
 		return new DiffOpDelete( $this->closing );
 	}
+	public function isEmpty(){
+		if (count($closing) == 0){
+			return true;
+		} 
+		return false;
+	}
 }
 /**
  * Extends DiffOp. Used to mark strings that have been
@@ -166,6 +181,12 @@ class DiffOpChange extends DiffOp {
 	 */
 	public function reverse() {
 		return new DiffOpChange( $this->closing, $this->orig );
+	}
+	public function isEmpty(){
+		if (count($origin) == 0 && count($closing) == 0){
+			return false;
+		} 
+		return true;
 	}
 }
 /**

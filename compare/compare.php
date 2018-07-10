@@ -12,62 +12,55 @@ foreach ($dir as $fileinfo) {
 		$json_file = json_decode($data_file, true);
 
 		$deleted= array();
+		$num = count($deleted);
+		echo "$num<br>";
 		$added = array();
 		$file = fopen($processed_data_path . 'processed_' . $fileinfo->getFilename(), 'a');
 
 		for ($i = 1; $i < count($json_file); $i++) {
-			$from_lines = preg_split('/[\ \n\,]+/', $json_file["$i"][0]);
+			$from_lines = preg_split('/[\s]+/', $json_file["$i"][0]);
 			$k = $i + 1;
-			$to_lines = preg_split('/[\ \n\,]+/', $json_file["$k"][0]);
+			$to_lines = preg_split('/[\s]+/', $json_file["$k"][0]);
 			$results = $my_diff_engine->diff($from_lines, $to_lines);
 			foreach ($results as $object) {
-				//Group all deleted and added parts
-			    if ($object->getType() === "change"){
-					foreach ($object->getOrig() as $result_array){
-						$deleted[] = $result_array;
+				//If there are changes
+				if (!$object->isEmpty()){
+					//Group all deleted and added parts
+				    if ($object->getType() === "change"){
+						foreach ($object->getOrig() as $result_array){
+							$deleted[] = $result_array;
+						}
+						foreach ($object->getClosing() as $result_array){
+							$added[] = $result_array;
+						}
 					}
-					foreach ($object->getClosing() as $result_array){
-						$added[] = $result_array;
+					else if ($object->getType() === "add"){
+						foreach ($object->getClosing() as $result_array){
+							$added[] = $result_array;
+						}
 					}
-				}
-				else if ($object->getType() === "add"){
-					foreach ($object->getClosing() as $result_array){
-						$added[] = $result_array;
+					else if ($object->getType() === "delete"){
+						foreach ($object->getOrig() as $result_array){
+							$deleted[] = $result_array;
+						}
 					}
-				}
-				else if ($object->getType() === "delete"){
-					foreach ($object->getOrig() as $result_array){
-						$deleted[] = $result_array;
-					}
-				}
+					};
 			};
-			if (isset($deleted) || isset($added)){
-					//Create updated json file
-					$updated_data = json_encode(array('original' => $json_file["$i"][0], 'category' => $json_file["$i"][1], 'deleted' => $deleted, 'added' => $added),JSON_PRETTY_PRINT);
-					
-					//Write to a new file
-					fwrite($file, $updated_data);
-					//Clear data for next iteration
-					$from_lines = array();
-					$to_lines = array();
-					$results = array();
-					$added = array();
-					$deleted = array();
-					}
+			if (count($deleted) > 0 || count($added) > 0){
+				//Create updated json file
+				$updated_data = json_encode(array('original' => $json_file["$i"][0], 'category' => $json_file["$i"][1], 'deleted' => $deleted, 'added' => $added),JSON_PRETTY_PRINT);
+				
+				//Write to a new file
+				fwrite($file, $updated_data);
+				//Clear data for next iteration
+				$from_lines = array();
+				$to_lines = array();
+				$results = array();
+				$added = array();
+				$deleted = array();
+				}
 		}
 		fclose($file);
 	}
 }
-// foreach ($deleted as $deleted_part){
-// 	$deleted_content = $deleted_part[0];
-// 	$deleted_index = $deleted_part[1];
-// 	echo "Deleted: $deleted_content -- index: $deleted_index <br> ";
-// }
-// foreach ($added as $added_part){
-// 	$added_content = $added_part[0];
-// 	$added_index = $added_part[1];
-// 	echo "Added: $added_content -- index: $added_index <br>";
-// }
-
-
 ?>
