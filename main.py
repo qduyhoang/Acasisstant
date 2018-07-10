@@ -135,6 +135,8 @@ def stripFormatting(text):
 	text = re.sub(r'(\[\[)(.+?)(\]\])', r'\2', text)
 	#Remove new line characters
 	text = text.replace('\n', ' ')
+	#Remove apostrophe when they are not used to show possession
+	text = re.sub("(?<!s)'(?!(?:t|ll|e?m)\b)", '', text)
 	return text
 
 
