@@ -88,27 +88,45 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_forma
 				#Get root tag <page>
 				root = tree.getroot()[1]
 				file_start = '{http://www.mediawiki.org/xml/export-0.10/}'
-				data = {}
-				#Get text content of all revision and store revision number
-				i = 1
-				for revision in root.iter(file_start+'revision'):
-					text = revision.find(file_start+'text').text
-					if text != None:
-						#Get categories of the current revision
-						category = category_content_pattern.findall(text)
-						if remove_formatting:
-							text, refs = stripFormatting(text)
-						data[i] = text, category, refs
-						i += 1
-				#Write a new file with filtered data as json format
+
 				json_file_name = file_name[:-3] + 'json'
-				with open(file_path+json_file_name, 'w') as data_file:
-					json.dump(data, data_file, indent = 4)
+				with open(file_path+json_file_name, 'a') as data_file:
+					#Get text content of all revision and store revision number
+					i = 1
+					for revision in root.iter(file_start+'revision'):
+						data = {}
+						text = revision.find(file_start+'text').text
+						if text != None:
+							#Get categories of the current revision
+							category = category_content_pattern.findall(text)
+							if remove_formatting:
+								text, refs = stripFormatting(text)
+							# text = tokenization(text)
+							data[i] = text, category, refs
+
+							#Write data in json format
+							json.dump(data, data_file)
+							data_file.write('\n') 
+							i += 1
 				#Delete uncompressed after finish processing
 				os.remove(cur_path+file_name)
 				print(file_name, ' processed')
 
 
+def tokenization(text):
+	protoblocks = re.split(' ', text)
+	with open("chars.txt", "r") as f:
+	    chars = f.read()
+	results = []
+	for protoblock in protoblocks:
+	    newblocks = []
+	    newblocks.extend(re.findall("([^"+chars+"0-9\']+|["+chars+"0-9\']+)", protoblock))
+	    for block in newblocks:
+	        if not re.search("["+chars+"0-9\']+", block):
+	            results.extend(block)
+	        else:
+	            results.append(block)
+	return results
 def stripFormatting(text):
 	refs = [] #Store references
 	#Use HTML parser to remove html tags and content inside them
@@ -122,7 +140,7 @@ def stripFormatting(text):
 		html.decompose()
 	text = soup.text
 
-	#Remove infoboxes: Removing all content of nested {{ }}
+	#Remove infoboxes: Removing all content of nested {{ }} 
 	n = 1  # run at least once
 	while n:
 		text, n = re.subn(r'\{\{[^{}]*\}\}', '', text)  # remove non-nested/flat balanced parts
@@ -147,15 +165,15 @@ def stripFormatting(text):
 
 
 if __name__ == '__main__':
-	#what we need: 'enwiki-latest-stub-meta-history[0-9]{0,3}.xml.gz'
-	# compressed_file_pattern = re.compile('enwiki-latest-abstract11.xml.gz')
+	# what we need: 'enwiki-latest-stub-meta-history[0-9]{0,3}.xml.gz'
+	compressed_file_pattern = re.compile('enwiki-latest-abstract11.xml.gz')
 	unprocessed_file_pattern = re.compile('wiki.xml')
 
-	# #retrieveData(compressed_file_pattern)
-	# # uncompressData(compressed_file_pattern)
+	# retrieveData(compressed_file_pattern)
+	# uncompressData(compressed_file_pattern)
 	processData(unprocessed_file_pattern, remove_formatting = True)
-	#call php script
-	result = subprocess.run(
-	    ['php', 'compare/compare.php'],    # program and arguments
-	    check=True               # raise exception if program fails
-	)
+	# #call php script
+	# result = subprocess.run(
+	#     ['php', 'compare/compare.php'],    # program and arguments
+	#     check=True               # raise exception if program fails
+	# )
