@@ -1,4 +1,5 @@
 <?php
+ini_set('memory_limit', '-1'); //json files are big. let the server use all the memory it wants
 require('DiffEngine.php');
 $my_diff_engine = new DiffEngine();
 $unprocessed_data_path = 'data/unprocessed/';
@@ -6,7 +7,7 @@ $processed_data_path = 'data/processed/';
 //Get data from existing json file
 $dir = new DirectoryIterator($unprocessed_data_path);
 foreach ($dir as $fileinfo) {
-    if (!$fileinfo->isDot()) {
+    if (!$fileinfo->isDot() && $fileinfo->getFilename() != 'category_dict.json' ) {
         $data_file = file_get_contents($unprocessed_data_path . $fileinfo->getFilename());
 		// converts json data into array
 		$json_file = json_decode($data_file, true);
@@ -14,9 +15,9 @@ foreach ($dir as $fileinfo) {
 		$added = array();
 		$file = fopen($processed_data_path . 'processed_' . $fileinfo->getFilename(), 'a');
 		for ($i = 1; $i < count($json_file); $i++) {
-			$from_lines = preg_split('/[\s]+/', $json_file["$i"][0]);
+			$from_lines = $json_file["$i"][0];
 			$k = $i + 1;
-			$to_lines = preg_split('/[\s]+/', $json_file["$k"][0]);
+			$to_lines = $json_file["$k"][0];
 			$results = $my_diff_engine->diff($from_lines, $to_lines);
 			foreach ($results as $object) {
 				//If there are changes
@@ -43,7 +44,7 @@ foreach ($dir as $fileinfo) {
 					};
 			};
 			$should_store = true;
-			if (count($deleted) > 0 && count($added) > 0){
+			if (count($deleted) == 0 && count($added) == 0){
 				$should_store == false;
 			} else if (count($deleted) == count($from_limes)){ //Someone deletes the whole article...vandalism?
 				$should_store == false;
