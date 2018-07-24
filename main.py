@@ -12,6 +12,7 @@ from tqdm import tqdm
 import math
 from bs4 import BeautifulSoup
 import exec_time
+from collections import defaultdict
 
 
 def getTotalFileSize(file_path, file_name_pattern):
@@ -77,6 +78,8 @@ def uncompressData(file_name_pattern, file_path = 'data/unprocessed/'):
 
 #Retrieve content from xml files
 def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_formatting = False):
+	#global dictionary of documents + revision numbers vs categories
+	category_dict = defaultdict(dict)
 	#Content of category
 	category_content_pattern = re.compile('\[\[Category:(.*?)\]\]')
 	#Search uncompressed files
@@ -96,18 +99,25 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_forma
 					text = revision.find(file_start+'text').text
 					if text != None:
 						#category of each revision
-						category = category_content_pattern.findall(text)
+						categories = category_content_pattern.findall(text)
+						if len(categories):  #if there is any categories
+							for cat in categories: 
+								if file_name not in category_dict[cat]:
+									category_dict[cat][file_name] = i  #store document's name and revision number
 						if remove_formatting:
 							text, refs = stripFormatting(text)
-						data[i] = tokenization(text), category, refs
+						data[i] = tokenization(text), categories, refs
 					i += 1
 				#Write a new file with filtered data as json format
 				json_file_name = file_name[:-3] + 'json'
 				with open(file_path+json_file_name, 'w') as data_file:
-					json.dump(data, data_file, indent = 4)
+					json.dump(data, data_file, indent = 2)
 				#Delete uncompressed after finish processing
 				os.remove(cur_path+file_name)
 				print(file_name, ' processed')
+
+	with open(file_path+'category_dict.json', 'w') as category_dict_file:
+		json.dump(category_dict, category_dict_file, indent = 2)
 
 def filter_special_chars(word):
 	to_filter = ["", "#", "/", ":%"]
@@ -148,8 +158,6 @@ def stripFormatting(text):
 	text = re.sub(r'(\[\[)(.+?)(\]\])', r'\2', text)
 	#Remove new line characters
 	text = text.replace('\n', ' ')
-	#Remove backslash characters
-	# text = text.replace('\\', '')
 	#Remove apostrophe when they are not used to show possession
 	text = re.sub("(?<!s)'(?!(?:t|ll|e?m)\b)", '', text)
 
@@ -165,7 +173,7 @@ if __name__ == '__main__':
 	# uncompressData(compressed_file_pattern)
 	processData(unprocessed_file_pattern, remove_formatting = True)
 	# call php script
-	# result = subprocess.run(
-	#     ['php', 'compare/compare.php'],    # program and arguments
-	#     check=True               # raise exception if program fails
-	# )
+	result = subprocess.run(
+	    ['php', 'compare/compare.php'],    # program and arguments
+	    check=True               # raise exception if program fails
+	)
