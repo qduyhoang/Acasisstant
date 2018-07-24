@@ -1,5 +1,14 @@
 <?php
 require('DiffEngine.php');
+// function filter_special_chars($word){
+// 	#Filter special chars and empty chars
+// 	$to_filter = array("", "#", "/", ":%");
+// 	if (in_array($word, $to_filter)){
+// 		return False;
+// 	} else {
+// 		return True;
+// 	}
+// };
 $my_diff_engine = new DiffEngine();
 $unprocessed_data_path = 'data/unprocessed/';
 $processed_data_path = 'data/processed/';
@@ -10,15 +19,17 @@ foreach ($dir as $fileinfo) {
         $data_file = file_get_contents($unprocessed_data_path . $fileinfo->getFilename());
 		// converts json data into array
 		$json_file = json_decode($data_file, true);
-
 		$deleted= array();
 		$added = array();
 		$file = fopen($processed_data_path . 'processed_' . $fileinfo->getFilename(), 'a');
 
+		#start processing
 		for ($i = 1; $i < count($json_file); $i++) {
-			$from_lines = preg_split('/[\s]+/', $json_file["$i"][0]);
+			#tokenization and filtering out special chars
+			$from_lines = preg_split('/ /', $json_file["$i"][0]);
 			$k = $i + 1;
-			$to_lines = preg_split('/[\s]+/', $json_file["$k"][0]);
+			$to_lines = preg_split('/ /', $json_file["$k"][0]);
+			#get difference objects
 			$results = $my_diff_engine->diff($from_lines, $to_lines);
 			foreach ($results as $object) {
 				//If there are changes
@@ -44,9 +55,19 @@ foreach ($dir as $fileinfo) {
 					}
 					};
 			};
-			if (count($deleted) > 0 || count($added) > 0){
-				//Create updated json file
-				$updated_data = json_encode(array('original' => $json_file["$i"][0], 'category' => $json_file["$i"][1], 'references' => $json_file["$i"][2], 'deleted' => $deleted, 'added' => $added),JSON_PRETTY_PRINT);
+			$seems_legit = true;  
+			if (count($deleted) > 0 && count($added) > 0){
+				$seems_legit == false;
+			}
+			#exclude if the whole article is deleted - sign of vandalism
+			if (count($deleted) == count($from_lines)){ 
+				$seems_legit = false;
+				#skip the next revision because the original text is compromised
+				$i += 1;
+			}
+			if ($seems_legit){
+			//Create updated json file
+				$updated_data = json_encode(array('original' => $from_lines, 'category' => $json_file["$i"][1], 'references' => $json_file["$i"][2], 'deleted' => $deleted, 'added' => $added),JSON_PRETTY_PRINT);
 				
 				//Write to a new file
 				fwrite($file, $updated_data);
@@ -56,7 +77,7 @@ foreach ($dir as $fileinfo) {
 				$results = array();
 				$added = array();
 				$deleted = array();
-				}
+			}
 		}
 		fclose($file);
 	}

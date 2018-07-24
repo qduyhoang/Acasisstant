@@ -89,44 +89,36 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_forma
 				root = tree.getroot()[1]
 				file_start = '{http://www.mediawiki.org/xml/export-0.10/}'
 
+				#Get text content and revision number
+				i = 1
+				data = {}
+				for revision in root.iter(file_start+'revision'):
+					text = revision.find(file_start+'text').text
+					if text != None:
+						#category of each revision
+						category = category_content_pattern.findall(text)
+						if remove_formatting:
+							text, refs = stripFormatting(text)
+						data[i] = tokenization(text), category, refs
+					i += 1
+				#Write a new file with filtered data as json format
 				json_file_name = file_name[:-3] + 'json'
-				with open(file_path+json_file_name, 'a') as data_file:
-					#Get text content of all revision and store revision number
-					i = 1
-					for revision in root.iter(file_start+'revision'):
-						data = {}
-						text = revision.find(file_start+'text').text
-						if text != None:
-							#Get categories of the current revision
-							category = category_content_pattern.findall(text)
-							if remove_formatting:
-								text, refs = stripFormatting(text)
-							# text = tokenization(text)
-							data[i] = text, category, refs
-
-							#Write data in json format
-							json.dump(data, data_file)
-							data_file.write('\n') 
-							i += 1
+				with open(file_path+json_file_name, 'w') as data_file:
+					json.dump(data, data_file, indent = 4)
 				#Delete uncompressed after finish processing
 				os.remove(cur_path+file_name)
 				print(file_name, ' processed')
 
+def filter_special_chars(word):
+	to_filter = ["", "#", "/", ":%"]
+	if word in to_filter:
+		return False
+	return True
 
 def tokenization(text):
-	protoblocks = re.split(' ', text)
-	with open("chars.txt", "r") as f:
-	    chars = f.read()
-	results = []
-	for protoblock in protoblocks:
-	    newblocks = []
-	    newblocks.extend(re.findall("([^"+chars+"0-9\']+|["+chars+"0-9\']+)", protoblock))
-	    for block in newblocks:
-	        if not re.search("["+chars+"0-9\']+", block):
-	            results.extend(block)
-	        else:
-	            results.append(block)
-	return results
+	#return a list of filtered tokens
+	return list(filter(filter_special_chars, re.split("([\w]+)", text)))
+
 def stripFormatting(text):
 	refs = [] #Store references
 	#Use HTML parser to remove html tags and content inside them
@@ -160,7 +152,7 @@ def stripFormatting(text):
 	# text = text.replace('\\', '')
 	#Remove apostrophe when they are not used to show possession
 	text = re.sub("(?<!s)'(?!(?:t|ll|e?m)\b)", '', text)
-	#Return stripped formatting text and references 
+
 	return text, refs
 
 
@@ -172,7 +164,7 @@ if __name__ == '__main__':
 	# retrieveData(compressed_file_pattern)
 	# uncompressData(compressed_file_pattern)
 	processData(unprocessed_file_pattern, remove_formatting = True)
-	# #call php script
+	# call php script
 	# result = subprocess.run(
 	#     ['php', 'compare/compare.php'],    # program and arguments
 	#     check=True               # raise exception if program fails

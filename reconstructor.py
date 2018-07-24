@@ -1,96 +1,34 @@
 import os
-original = "Drexel University is an institution of higher learning located in Philadelphia, Pennsylvania.  The school was founded in 1891 by Anthony J. Drexel, a noted financier and philanthropist.  The university has ten colleges and schools: *Arts and Sciences  *Bennett S. LeBow College of Business  *Engineering  *Evening & Professional Studies  *Information Science and Technology  *Media Arts and Design  *School of Biomedical Engineering, Science and Health Systems  *School of Education *School of Environmental Science, Engineering and Policy (SESEP -- now defunct) *Hospitality Management  The schools sports teams are called the Dragons.  They participate in the NCAAs Divison I-AA and the Colonial Athletic Association.  Every year, more than one percent of all graduating engineers in the US graduate from Drexel University.  When people think they are getting a bad deal from the University, the often refer to it as getting the Drexel Shaft.  Drexel University borders The University of Pennsylvania.  Links: *[http:\/\/www.drexel.edu Drexel University]"
+original = "William Shakespeare (1564-1616) was a poet, playwright, and actor in England.  He predominantly wrote between 1585 and 1610. Considering how well respected he is today, remarkably little is actually known of his life.  This fact accounts for the many theories on who, other than the actor William Shakespeare, may have written the works. Shakespeares reputation--as a poet and dramaturgist--has ebbed and flowed over the past five centuries.   His dramatic work is traditionally categorized in the following divisions: :Shakespearean tragedies :: Romeo and Juliet :: Macbeth :: King Lear :: Hamlet :: Othello :Shakespearean comedies :: Alls Well That Ends Well--Text|Alls Well That Ends Well :: As You Like It--Text|As You Like It :: A Midsummer Nights Dream|A Midsummer Nights Dream :: Much Ado About Nothing :: Measure for Measure :: The Tempest :Shakespearean histories ::Julius Caeser ::Antony and Cleopatra ::Richard III ::Richard II ::Henry V ::Henry I  His other literary works include: :Shakespearean Sonnets (See Sonnet) :Shakespearean Long Poetry  Some famous \/quotations See also his contemporaries Christopher Marlowe and Elizabeth I|Queen Elizabeth I. ---- \/How to upload Shakespeare to Wikipedia--a good cause  \/Talk"
 deleted =  [
-        44,
-        45,
-        46,
-        47,
-        54,
-        56,
-        58,
-        64,
-        65,
-        66,
-        67,
-        68,
-        69,
-        70,
-        71,
-        72,
-        73,
-        74,
-        75,
-        76,
-        77
+         167,
+        168,
+        172
     ]
 added = [
         [
-            45,
-            "*Medicine"
+            167,
+            "Marlowe,"
         ],
         [
-            46,
-            "*Nursing"
+            171,
+            "I,"
         ],
         [
-            47,
+            172,
             "and"
         ],
         [
-            48,
-            "Health"
+            173,
+            "Edward"
         ],
         [
-            49,
-            "Professions"
+            174,
+            "de"
         ],
         [
-            56,
-            "&"
-        ],
-        [
-            58,
-            "*Richard"
-        ],
-        [
-            59,
-            "C."
-        ],
-        [
-            60,
-            "Goodwin"
-        ],
-        [
-            61,
-            "College"
-        ],
-        [
-            63,
-            "Evening"
-        ],
-        [
-            64,
-            "and"
-        ],
-        [
-            65,
-            "*Professional"
-        ],
-        [
-            66,
-            "Studies"
-        ],
-        [
-            67,
-            "====Schools===="
-        ],
-        [
-            68,
-            "*Biomedical"
-        ],
-        [
-            74,
-            "*Education"
+            175,
+            "Vere."
         ]
     ]
 #Search uncompressed files
