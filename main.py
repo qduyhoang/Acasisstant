@@ -110,9 +110,10 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_forma
 						if len(categories):  #if there is any categories
 							for cat in categories:  #for each category
 								if cat not in local_dict:  #if category hasn't existed
-									local_dict[cat] = []	#create an array to store revision numbers
-								else:
-									local_dict[cat].append(i)
+								# 	local_dict[cat] = []	#create an array to store revision numbers
+								# else:						#uncomment this to have array of all revision numbers
+								# 	local_dict[cat].append(i)
+									local_dict[cat] = i
 
 						if remove_formatting:	
 							text, refs = stripFormatting(text)
@@ -123,14 +124,14 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_forma
 					if category in category_files:  #if a category file has existed
 						with open('data/categories/'+category+".txt", "a") as category_file:  #append to the file
 							#store document's name and revision number
-							category_file.write('\n'+file_name)
-							for num in revision_number:
-								category_file.write(' '+ str(num))
+							category_file.write('\n'+file_name + ' ' + str(revision_number))
+							# for num in revision_number:	#uncomment this to have array of all revision numbers
+							# 	category_file.write(' '+ str(num))
 					else:
 						with open('data/categories/'+category+".txt", "w") as category_file:  #create a new file
-							category_file.write('\n'+file_name)
-							for num in revision_number:
-								category_file.write(' '+ str(num))
+							category_file.write('\n'+file_name + ' ' + str(revision_number))
+							# for num in revision_number:
+							# 	category_file.write(' '+ str(num))
 
 				#Write a new file with filtered data as json format
 				json_file_name = file_name[:-3] + 'json'
