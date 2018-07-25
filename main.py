@@ -124,12 +124,12 @@ def processData(file_name_pattern, file_path = 'data/unprocessed/', remove_forma
 					if category in category_files:  #if a category file has existed
 						with open('data/categories/'+category+".txt", "a") as category_file:  #append to the file
 							#store document's name and revision number
-							category_file.write('\n'+file_name + ' ' + str(revision_number))
+							category_file.write('\n'+file_name + ' ' + str(revision_number) + '\n')
 							# for num in revision_number:	#uncomment this to have array of all revision numbers
 							# 	category_file.write(' '+ str(num))
 					else:
 						with open('data/categories/'+category+".txt", "w") as category_file:  #create a new file
-							category_file.write('\n'+file_name + ' ' + str(revision_number))
+							category_file.write(file_name + ' ' + str(revision_number) + '\n')
 							# for num in revision_number:
 							# 	category_file.write(' '+ str(num))
 
