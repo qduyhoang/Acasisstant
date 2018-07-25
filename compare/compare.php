@@ -1,8 +1,6 @@
 <?php
 function checkLegit($text){
-	print_r($text);
 	if (in_array("REDIRECT", $text)){
-		echo "FUCK";
 		return false;
 	};
 	return true;
@@ -31,18 +29,16 @@ foreach ($dir as $fileinfo) {
 			$results = $my_diff_engine->diff($from_lines, $to_lines);
 			foreach ($results as $object) {
 				//If there are changes
-				if ( (!$object->isEmpty()) && checkLegit($object->getOrig()[0])){
+				if (!$object->isEmpty()){
 					//Group all deleted and added parts
 				    if ($object->getType() === "change"){
 				    	//if no one deletes the whole document
-				    	if (count($object->getOrig() != count($from_lines))){
-				    		foreach ($object->getOrig() as $result_array){
-								$deleted[] = $result_array;
-							}
-							foreach ($object->getClosing() as $result_array){
-								$added[] = $result_array;
-							}
-				    	}
+			    		foreach ($object->getOrig() as $result_array){
+							$deleted[] = $result_array;
+						}
+						foreach ($object->getClosing() as $result_array){
+							$added[] = $result_array;
+						}
 					}
 					else if ($object->getType() === "add"){
 						foreach ($object->getClosing() as $result_array){
@@ -51,19 +47,22 @@ foreach ($dir as $fileinfo) {
 					}
 					else if ($object->getType() === "delete"){
 						//if no one deletes the whole document
-				    	if (count($object->getOrig() != count($from_lines))){
-				    		foreach ($object->getOrig() as $result_array){
-								$deleted[] = $result_array;
-							}
+			    		foreach ($object->getOrig() as $result_array){
+							$deleted[] = $result_array;
 						}
 					};
 				};
 			};
-			//Create updated json file
-			$updated_data = json_encode(array('original' => $from_lines, 'category' => $json_file["$i"][1], 'references' => $json_file["$i"][2], 'deleted' => $deleted, 'added' => $added),JSON_PRETTY_PRINT);
-			
-			//Write to a new file
-			fwrite($file, $updated_data);
+			$should_store = true;
+			if (!checkLegit($deleted) || !checkLegit($added) || !checkLegit($from_lines) || (count($deleted) == count($from_lines)) || ((count($deleted) == 0) && (count($added) == 0)) ){
+				$should_store = false;
+			};
+			if ($should_store){
+				//Create updated json file
+				$updated_data = json_encode(array('original' => $from_lines, 'category' => $json_file["$i"][1], 'references' => $json_file["$i"][2], 'deleted' => $deleted, 'added' => $added),JSON_PRETTY_PRINT);	
+				//Write to a new file
+				fwrite($file, $updated_data);
+			}
 			//Clear data for next iteration
 			$from_lines = array();
 			$to_lines = array();
