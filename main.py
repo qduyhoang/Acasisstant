@@ -72,9 +72,6 @@ def uncompressData(input_path = 'data/compressed/', output_path = 'data/unproces
 						#Decompress file and save
 						buf = gzip.decompress(compressed_file.read())
 						uncompressed_file.write(buf)
-					if buf:
-						progressBar.set_postfix(file=filepath[-10:], refresh=False)
-						progressBar.update(len(buf))
 			#Delete comesseprd file after uncompressing
 			os.remove(file)
 
@@ -199,7 +196,7 @@ if __name__ == '__main__':
 	
 	retrieveData(compressed_file_pattern)
 	uncompressData()
-	# processData(unprocessed_file_pattern, remove_formatting = True)
+	processData(unprocessed_file_pattern, remove_formatting = True)
 	# call php script
 	result = subprocess.run(
 	    ['php', 'compare/compare.php'],    # program and arguments
