@@ -56,7 +56,8 @@ def uncompressData(input_path = 'data/compressed/', output_path = 'data/unproces
 	# Preprocess the total number of files
 	filetotal = 0
 	for file in iter_files(input_path):
-		filetotal +=1
+		if file.endswith('.gz'):
+			filetotal +=1
 
 	count = 0
 	#Search compressed files
@@ -92,58 +93,60 @@ def processData(input_path = 'data/compressed/', output_path = 'data/unprocessed
 
 	filetotal = 0
 	for file in iter_files(input_path):
-		filetotal +=1
+		if file.endswith('.xml'):
+			filetotal +=1
 	#Search uncompressed files
 	filecounter = 0
 	for file in iter_files(input_path):
-		filecounter += 1
-		file_name = os.path.basename(file)
-		logger.info('Processing %d/%d files...' %(filecounter, filetotal))
-		tree = ET.parse(file)
-		#Get root tag <page>
-		root = tree.getroot()[1]
-		file_start = '{http://www.mediawiki.org/xml/export-0.10/}'
+		if file.endswith('.xml'):
+			filecounter += 1
+			file_name = os.path.basename(file)
+			logger.info('Processing %d/%d files...' %(filecounter, filetotal))
+			tree = ET.parse(file)
+			#Get root tag <page>
+			root = tree.getroot()[1]
+			file_start = '{http://www.mediawiki.org/xml/export-0.10/}'
 
-		#Get text content and revision number
-		revision_count = 1
-		data = {}
-		for revision in root.iter(file_start+'revision'):
-			text = revision.find(file_start+'text').text
-			if text != None:
-				#category of each revision
-				categories = category_content_pattern.findall(text)
-				if len(categories):  #if there is any categories
-					for cat in categories:  #for each category
-						if cat not in local_dict:  #if category hasn't existed
-						# 	local_dict[cat] = []	#create an array to store revision numbers
-						# else:						#uncomment this to have array of all revision numbers
-						# 	local_dict[cat].append(i)
-							local_dict[cat] = revision_count
+			#Get text content and revision number
+			revision_count = 1
+			data = {}
+			for revision in root.iter(file_start+'revision'):
+				text = revision.find(file_start+'text').text
+				if text != None:
+					#category of each revision
+					categories = category_content_pattern.findall(text)
+					if len(categories):  #if there is any categories
+						for cat in categories:  #for each category
+							if cat not in local_dict:  #if category hasn't existed
+							# 	local_dict[cat] = []	#create an array to store revision numbers
+							# else:						#uncomment this to have array of all revision numbers
+							# 	local_dict[cat].append(i)
+								local_dict[cat] = revision_count
 
-				if remove_formatting:	
-					text, refs = stripFormatting(text)
-				data[i] = tokenization(text), categories, refs
-			revision_count += 1
+					if remove_formatting:	
+						text, refs = stripFormatting(text)
+					data[i] = tokenization(text), categories, refs
+				revision_count += 1
 
-		for category, revision_number in local_dict.items():
-			if category in category_files:  #if a category file has existed
-				with open('data/categories/'+category+".txt", "a") as category_file:  #append to the file
-					#store document's name and revision number
-					category_file.write(file_name + ' ' + str(revision_number) + '\n')
-					# for num in revision_number:	#uncomment this to have array of all revision numbers
-					# 	category_file.write(' '+ str(num))
-			else:
-				with open('data/categories/'+category+".txt", "w") as category_file:  #create a new file
-					category_file.write(file_name + ' ' + str(revision_number) + '\n')
-					# for num in revision_number:
-					# 	category_file.write(' '+ str(num))
+			for category, revision_number in local_dict.items():
+				if category in category_files:  #if a category file has existed
+					with open('data/categories/'+category+".txt", "a") as category_file:  #append to the file
+						#store document's name and revision number
+						category_file.write(file_name + ' ' + str(revision_number) + '\n')
+						# for num in revision_number:	#uncomment this to have array of all revision numbers
+						# 	category_file.write(' '+ str(num))
+				else:
+					with open('data/categories/'+category+".txt", "w") as category_file:  #create a new file
+						category_file.write(file_name + ' ' + str(revision_number) + '\n')
+						# for num in revision_number:
+						# 	category_file.write(' '+ str(num))
 
-			#Write a new file with filtered data as json format
-			json_file_name = file_name[:-3] + 'json'
-			with open(output_path+json_file_name, 'w') as data_file:
-				json.dump(data, data_file, indent = 2)
-			#Delete uncompressed after finish processing
-			os.remove(file)
+				#Write a new file with filtered data as json format
+				json_file_name = file_name[:-3] + 'json'
+				with open(output_path+json_file_name, 'w') as data_file:
+					json.dump(data, data_file, indent = 2)
+				#Delete uncompressed after finish processing
+				os.remove(file)
 
 def filter_special_chars(word):
 	to_filter = ["", "#", "/", ":%"]
@@ -192,11 +195,11 @@ def stripFormatting(text):
 
 if __name__ == '__main__':
 	# what we need: 'enwiki-latest-stub-meta-history[0-9]{0,3}.xml.gz'
-	compressed_file_pattern = re.compile('enwiki-latest-abstract11.xml.gz')
+	file_pattern = re.compile('enwiki-latest-abstract11.xml.gz')
 	
-	retrieveData(compressed_file_pattern)
+	retrieveData(file_pattern)
 	uncompressData()
-	processData(unprocessed_file_pattern, remove_formatting = True)
+	processData(remove_formatting = True)
 	# call php script
 	result = subprocess.run(
 	    ['php', 'compare/compare.php'],    # program and arguments
