@@ -34,12 +34,6 @@ def iter_files(path):
         raise RuntimeError('Path %s is invalid' % path)
 
 
-def getTotalFileSize(file_path):
-	sizecounter = 0
-	for f in iter_files(file_path):
-		sizecounter += os.path.getsize(f)
-	return sizecounter
-
 def retrieveData(file_name_pattern, file_path = 'data/compressed/', baseURL = "https://dumps.wikimedia.org/enwiki/latest/"):
 	#Get html content and convert to string
 	html_page = requests.get(baseURL).text
@@ -59,50 +53,55 @@ def retrieveData(file_name_pattern, file_path = 'data/compressed/', baseURL = "h
 					compressed_file.write(data)
 
 def uncompressData(input_path = 'data/compressed/', output_path = 'data/unprocessed/'):
-	# Preprocess the total files sizes
-	sizecounter = getTotalFileSize(input_path)
+	# Preprocess the total number of files
+	filetotal = 0
+	for file in iter_files(input_path):
+		filetotal +=1
 
 	count = 0
-	# Show progress using file size
-	with tqdm(total = sizecounter, unit = 'B', unit_scale = True, unit_divisor = 1024) as progressBar:
-		#Search compressed files
-		for file in iter_files(input_path):
-			if file.endswith('.gz'):
-				out_file_name = file[:-3]
-				with gzip.open(file, 'rb') as compressed_file:
-					with open(out_file_name, 'wb') as uncompressed_file:
-						buf = 1
-						while buf:
-							#Decompress file and save
-							buf = gzip.decompress(compressed_file.read())
-							uncompressed_file.write(buf)
-						if buf:
-							progressBar.set_postfix(file=filepath[-10:], refresh=False)
-							progressBar.update(len(buf))
-				#Delete comesseprd file after uncompressing
-				os.remove(file)
-				logger.info('%s uncompressed' %os.path.basename(file))
-				count += 1
-		logger.info('%d files uncompressed' %count)
+	#Search compressed files
+	for file in iter_files(input_path):
+		if file.endswith('.gz'):
+			count += 1
+			logger.info('Extracting %d/%d files...' %(count, filetotal))
+			out_file_name = file[:-3]
+			with gzip.open(file, 'rb') as compressed_file:
+				with open(out_file_name, 'wb') as uncompressed_file:
+					buf = 1
+					while buf:
+						#Decompress file and save
+						buf = gzip.decompress(compressed_file.read())
+						uncompressed_file.write(buf)
+					if buf:
+						progressBar.set_postfix(file=filepath[-10:], refresh=False)
+						progressBar.update(len(buf))
+			#Delete comesseprd file after uncompressing
+			os.remove(file)
 
 
 #Retrieve content from xml files
 def processData(input_path = 'data/compressed/', output_path = 'data/unprocessed/', remove_formatting = False):
 	#global dictionary of documents + revision numbers vs categories
 	category_files = defaultdict(dict)
+	#local dict to store all revisions of category of each document
+	local_dict = defaultdict(dict)
+
 	#Store all existing category file names 
 	for cur_path, directories, files in os.walk('data/categories/'):
 		for file_name in files:
 			category_files[file_name] = 1
-	#local dict to store all revisions of category of each document
-	local_dict = defaultdict(dict)
-
 	#regex to get all content inside category tags
 	category_content_pattern = re.compile('\[\[Category:(.*?)\]\]')
-	#Search uncompressed files
+
+	filetotal = 0
 	for file in iter_files(input_path):
+		filetotal +=1
+	#Search uncompressed files
+	filecounter = 0
+	for file in iter_files(input_path):
+		filecounter += 1
 		file_name = os.path.basename(file)
-		logger.info('Processing %s' %file_name)
+		logger.info('Processing %d/%d files...' %(filecounter, filetotal))
 		tree = ET.parse(file)
 		#Get root tag <page>
 		root = tree.getroot()[1]
