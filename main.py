@@ -75,6 +75,7 @@ def uncompressData(input_path = 'data/compressed/', output_path = 'data/unproces
 						uncompressed_file.write(buf)
 			#Delete comesseprd file after uncompressing
 			os.remove(file)
+	logger.info('Finish extracting %d files.' %filetotal)
 
 
 #Retrieve content from xml files
@@ -147,6 +148,7 @@ def processData(input_path = 'data/compressed/', output_path = 'data/unprocessed
 					json.dump(data, data_file, indent = 2)
 				#Delete uncompressed after finish processing
 				os.remove(file)
+	logger.info('Finish processing %d files.' %filetotal)
 
 def filter_special_chars(word):
 	to_filter = ["", "#", "/", ":%"]
