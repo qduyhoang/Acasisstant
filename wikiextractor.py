@@ -529,7 +529,8 @@ class Extractor(object):
         self.text = revision
         self.text, self.category = [],[]
         for text, category in revision:
-            self.text.append(text)
+            if '#REDIRECT' not in text:
+                self.text.append(text)
             self.category.append(category)
         self.magicWords = MagicWords()
         self.frame = Frame()
