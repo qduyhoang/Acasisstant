@@ -517,7 +517,7 @@ class Extractor(object):
     """
     An extraction task on a article.
     """
-    def __init__(self, id, revid, title, lines):
+    def __init__(self, id, revid, title, revision):
         """
         :param id: id of page.
         :param title: tutle of page.
@@ -526,10 +526,11 @@ class Extractor(object):
         self.id = id
         self.revid = revid
         self.title = title
-        self.text = []
-        for line in lines:
-            revision = ''.join(line)
-            self.text.append(revision)
+        self.text = revision
+        self.text, self.category = [],[]
+        for text, category in revision:
+            self.text.append(text)
+            self.category.append(category)
         self.magicWords = MagicWords()
         self.frame = Frame()
         self.recursion_exceeded_1_errs = 0  # template recursion within expand()
@@ -537,19 +538,17 @@ class Extractor(object):
         self.recursion_exceeded_3_errs = 0  # parameter recursion
         self.template_title_errs = 0
 
-    def write_output(self, out, text):
+    def write_output(self, out, revisions):
         """
         :param out: a memory file
         :param text: the text of the page
         """
         url = get_url(self.id) #DOCUMENT ID
-
-        fieldnames = ['revision_number', 'text']
+        fieldnames = ['revision_number', 'text', 'category']
         writer = csv.DictWriter(out, fieldnames=fieldnames)
         writer.writeheader()
-        for revision_number, revision in enumerate(text):
-            writer.writerow({'revision_number': revision_number, 'text': [revision]})
-
+        for revision_count in range(len(revisions)):
+            writer.writerow({'revision_number': revision_count + 1, 'text': [revisions[revision_count]], 'category': self.category[revision_count]})
        
             
 
@@ -591,6 +590,8 @@ class Extractor(object):
         self.magicWords['CURRENTHOUR'] = time.strftime('%H')
         self.magicWords['CURRENTTIME'] = time.strftime('%H:%M:%S')
         revisions = self.text
+
+
         self.text = []          # save memory
         #
         # @see https://doc.wikimedia.org/mediawiki-core/master/php/classParser.html
@@ -598,11 +599,9 @@ class Extractor(object):
         #
         # $dom = $this->preprocessToDom( $text, $flag );
         # $text = $frame->expand( $dom );
-
         #Significantly faster to perform them all in one list comprehension
-        revisions = [" ".join(compact(self.clean(self.wiki2text(self.transform(text))))) for text in revisions]
-
-
+        revisions = [" ".join(compact(self.clean(self.wiki2text(self.transform(revision))))) for revision in revisions]
+   
         """Adjust the minimum length or article here"""
         # if sum(len(line) for line in text) < options.min_text_length:
         #     return
@@ -2679,7 +2678,7 @@ def load_templates(file, output_file=None):
     if output_file:
         output = codecs.open(output_file, 'wb', 'utf-8')
     for page_count, page_data in enumerate(pages_from(file)):
-        id, revid, title, ns, page = page_data
+        id, revid, title, ns, page, categories_list = page_data
         if not output_file and (not options.templateNamespace or
                                 not options.moduleNamespace):  # do not know it yet
             # reconstruct templateNamespace and moduleNamespace from the first title
@@ -2715,12 +2714,16 @@ def load_templates(file, output_file=None):
 
 def pages_from(input):
     tagRE = re.compile(r'(.*?)<(/?\w+)[^>]*?>(?:([^<]*)(<.*?>)?)?')
+    #regex to get all content inside category tags
+    categoryRE = re.compile('\[\[Category:(.*?)\]\]')
+
     """
     Scans input extracting pages.
     :return: (id, revid, title, namespace key, page), page is a list of lines.
     """
     # we collect individual lines, since str.join() is significantly faster
     # than concatenation
+
     revisions = []
     page = []
     id = None
@@ -2729,7 +2732,7 @@ def pages_from(input):
     revid = None
     inText = False
     title = None
-    revision_count = 0
+
     for line in input:
         if '<' not in line:  # faster than doing re.search()
             if inText:
@@ -2765,7 +2768,10 @@ def pages_from(input):
             if m.group(1):
                 page.append(m.group(1))
             inText = False
-            revisions.append(page)
+            #retrieve categories and references from text
+            page = "".join(page)
+            category = categoryRE.findall(page)
+            revisions.append([page, category])
             page = []
         elif inText:
             page.append(line)
@@ -2779,7 +2785,6 @@ def pages_from(input):
             title = None
             page = []
             revisions = []
-
 
 
 def process_dump(input_file, template_file, out_file, file_size, file_compress,
@@ -3167,8 +3172,7 @@ def main():
         file = fileinput.FileInput(input_file, openhook=fileinput.hook_compressed)
         for page_data in pages_from(file):
             id, revid, title, ns, revisions = page_data
-            Extractor(id, revid, title, revisions).extract(sys.stdout)
-
+            Extractor(id, revid, title, revisions, category).extract(sys.stdout)
         file.close()
         return
 
