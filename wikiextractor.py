@@ -545,11 +545,11 @@ class Extractor(object):
         :param text: the text of the page
         """
         url = get_url(self.id) #DOCUMENT ID
-        fieldnames = ['revision_number', 'text', 'category']
+        fieldnames = ['text', 'category']
         writer = csv.DictWriter(out, fieldnames=fieldnames)
         writer.writeheader()
         for revision_count in range(len(revisions)):
-            writer.writerow({'revision_number': revision_count + 1, 'text': [revisions[revision_count]], 'category': self.category[revision_count]})
+            writer.writerow({'text': revisions[revision_count], 'category': self.category[revision_count]})
        
             
 
