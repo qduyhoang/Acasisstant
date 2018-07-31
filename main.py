@@ -49,14 +49,13 @@ def retrieveData(file_name_pattern, file_path = 'data/compressed/', baseURL = "h
             #Write bz2 response to a new file and show progress bar
             for data in tqdm(response.iter_content(block_size), total=math.ceil(file_size//block_size) , unit='KB', unit_scale=True):
                 compressed_file.write(data)
-
+ 
 def uncompressData(input_path = 'data/compressed/', output_path = 'data/unprocessed/', remove_file = False):
 	# Preprocess the total number of files
 	filetotal = 0
 	for file in iter_files(input_path):
 		if file.endswith('.bz2'):
 			filetotal +=1
-
 	count = 0
 	#Search compressed files
 	for file in iter_files(input_path):
@@ -196,7 +195,6 @@ def stripFormatting(text):
 if __name__ == '__main__':
 	# what we need: 'enwiki-latest-pages-meta-history[0-9]{0,2}.xml.*\.bz2'
 	file_pattern = re.compile('enwiki-latest-pages-meta-history1{0,3}.xml.*\.bz2')
-	
 #retrieveData(file_pattern)
 uncompressData()
 	#processData(remove_formatting = True)
@@ -204,4 +202,3 @@ uncompressData()
 	#result = subprocess.run(
 	 #   ['php', 'compare/compare.php'],    # program and arguments
 	  #  check=True               # raise exception if program fails
-#	)
