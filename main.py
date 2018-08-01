@@ -173,7 +173,7 @@ def processData(input_path = 'data/compressed/', output_path = 'data/unprocessed
  	return text, refs
  if __name__ == '__main__':
 	# what we need: 'enwiki-latest-pages-meta-history[0-9]{0,2}.xml.*\.bz2'
-	file_pattern = re.compile('enwiki-latest-pages-meta-history1{0,3}.xml.*\.bz2')
+	file_pattern = re.compile('enwiki-latest-pages-meta-history1{0,3}.xml.*\.7z')
 #retrieveData(file_pattern)
 uncompressData()
 	#processData(remove_formatting = True)
