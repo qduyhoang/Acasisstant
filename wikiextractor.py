@@ -545,11 +545,9 @@ class Extractor(object):
         :param text: the text of the page
         """
         url = get_url(self.id) #DOCUMENT ID
-        fieldnames = ['text', 'category']
-        writer = csv.DictWriter(out, fieldnames=fieldnames)
-        writer.writeheader()
         for revision_count in range(len(revisions)):
-            writer.writerow({'text': revisions[revision_count], 'category': self.category[revision_count]})
+            revision_dict = '{"text": %s, "category": %s}\n' %(revisions[revision_count], self.category[revision_count])
+            out.write(revision_dict)
        
             
 
@@ -2717,6 +2715,7 @@ def pages_from(input):
     tagRE = re.compile(r'(.*?)<(/?\w+)[^>]*?>(?:([^<]*)(<.*?>)?)?')
     #regex to get all content inside category tags
     categoryRE = re.compile('\[\[Category:(.*?)\]\]')
+    jsonControlRE = re.compile(r'("[\s\w]*)"([\s\w]*")')
 
     """
     Scans input extracting pages.
@@ -2771,6 +2770,8 @@ def pages_from(input):
             inText = False
             #retrieve categories and references from text
             page = "".join(page)
+            #Remove json control characters
+            page = re.sub(jsonControlRE,r"\1\'\2", page)
             category = categoryRE.findall(page)
             revisions.append([page, category])
             page = []
