@@ -1,3 +1,8 @@
+"""Tokenization, lemmas, POS tagging, Named-entity-recognition"""
+
+
+
+
 from pycorenlp.corenlp import StanfordCoreNLP
 import logging
 import json
