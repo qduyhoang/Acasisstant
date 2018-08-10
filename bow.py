@@ -9,6 +9,8 @@ import json
 from six import iteritems
 from pprint import pprint  # pretty-printer
 import os
+import re
+from sklearn.cluster import KMeans
 
 TEMP_FOLDER = 'data/temp'
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -19,9 +21,29 @@ stopword_set = set(stopwords.words("english"))
 stoplist = stopwords.words("english")
 class MyCorpus(object):
     def __iter__(self):
-        for line in smart_open('data/unprocessed/input', 'rb'):
-        # assume there's one document per line, tokens separated by whitespace
-            yield dictionary.doc2bow(line.lower().split())
+        #store number of sentences of each revision
+        with smart_open('data/processed/index', 'a') as sentence_index:
+            sentence_num = 0
+            for line in smart_open('data/unprocessed/input', 'rb'):
+                # assume there's one document per line, tokens separated by whitespace
+                line = json.loads(line)['text'].lower()
+                for sentence in split_by_sentence(line):
+                    sentence_num += 1
+                    yield dictionary.doc2bow(sentence)
+                sentence_index.write(str(sentence_num))
+                sentence_index.write('\n')
+
+def split_by_sentence(text):
+    text = re.split('([\W])', text.lower())
+    stop = ('...', '.', '?', '!', '!!!')
+    seperator = (' ', '', "'", ',')
+    sentence = []
+    for word in text:
+        if word in stop:
+            yield sentence
+            sentence = []
+        elif word not in seperator:
+            sentence.append(word)
 
 def nlp_clean(data):
    new_data = []
@@ -35,7 +57,7 @@ def nlp_clean(data):
 if not os.path.isfile(os.path.join(TEMP_FOLDER, 'my.dict')):
     # collect statistics about all tokens
     dictionary = gensim.corpora.Dictionary()
-    with smart_open('data/unprocessed/input', 'rb', encoding='utf-8') as alldata:
+    with smart_open('data/unprocessed/input', 'rb', encoding='utf-8') as alldata, smart_open('data/processed/raw', 'w') as output:
         for line_no, line in enumerate(alldata):
             line = json.loads(line)
             tokens = nlp_clean(gensim.utils.to_unicode(line['text']).split())
@@ -46,6 +68,29 @@ if not os.path.isfile(os.path.join(TEMP_FOLDER, 'my.dict')):
     dictionary.save(os.path.join(TEMP_FOLDER, 'my.dict'))  # store the dictionary, for future reference
 else:
     dictionary = gensim.corpora.Dictionary.load(os.path.join(TEMP_FOLDER, 'my.dict'))
+
 corpus_memory_friendly = MyCorpus() # doesn't load the corpus into memory!
 # save corpus in Matrix Market format.
 gensim.corpora.MmCorpus.serialize(os.path.join(TEMP_FOLDER, 'compora.mm'), corpus_memory_friendly)
+
+corpus = gensim.corpora.MmCorpus(os.path.join(TEMP_FOLDER, 'compora.mm'))
+
+all_data = []
+sentence_each_revision = {}
+with smart_open('data/processed/index') as sentence_index:
+    for revision_num, sentence_num in enumerate(sentence_index):
+        sentence_each_revision[revision_num] = int(sentence_num)
+    for sentence_num, sentence in enumerate(corpus):
+        if sentence_num <= sentence_each_revision[3] and sentence_num > sentence_each_revision[0]:
+            all_data.append(all_data)
+
+#number of clusters
+num_cluster = 13
+#fitting the input data
+kmeans = KMeans(num_cluster).fit(all_data)
+# Getting the cluster labels
+labels = kmeans.predict(X)
+# Centroid values
+centroids = kmeans.cluster_centers_
+
+
