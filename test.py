@@ -9,6 +9,8 @@ import re
 from pprint import pprint
 import json
 
+from nltk.tokenize import sent_tokenize
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans, MiniBatchKMeans
 class MyCorpus(object):
@@ -19,30 +21,17 @@ class MyCorpus(object):
             yield json.loads(line)['text']
 
 
-def split_by_sentence(text):
-    text = re.split('([\W])', text.lower())
-    stop = ('...', '.', '?', '!', '!!!')
-    seperator = (' ', '', "'", ',')
-    sentence = []
-    for word in text:
-        if word in stop:
-            yield ' '.join(sentence)
-            sentence = []
-        elif word not in seperator:
-            sentence.append(word)
+
 memory_friendly_corpus = MyCorpus()
 
 dataset = []
 for revision_num, cur_revision in enumerate(memory_friendly_corpus):
-	if revision_num == 0:
-		first_revision = cur_revision
-	elif revision_num <= 2:
-		second_revision = cur_revision
-		for sentence in split_by_sentence(first_revision):
-			dataset.append(sentence)
-		for sentence in split_by_sentence(second_revision):
-			dataset.append(sentence)
-		first_revision = second_revision
+    if revision_num == 0:
+        first_revision = cur_revision
+    elif revision_num <= 2:
+        dataset.extend(sent_tokenize(first_revision))
+        dataset.extend(sent_tokenize(cur_revision))
+        first_revision = cur_revision
 
 
 """ Transform texts to Tf-Idf coordinates and cluster texts using K-Means """
