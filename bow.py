@@ -84,13 +84,5 @@ with smart_open('data/processed/index') as sentence_index:
         if sentence_num <= sentence_each_revision[3] and sentence_num > sentence_each_revision[0]:
             all_data.append(all_data)
 
-#number of clusters
-num_cluster = 13
-#fitting the input data
-kmeans = KMeans(num_cluster).fit(all_data)
-# Getting the cluster labels
-labels = kmeans.predict(X)
-# Centroid values
-centroids = kmeans.cluster_centers_
 
 
