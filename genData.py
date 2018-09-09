@@ -8,6 +8,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
 from pprint import pprint
+import os
 
 tfidf = TfidfVectorizer()
 
@@ -125,10 +126,37 @@ def findSimilarity(sentence, sentences):
 	result_index = list(related_product_indices).pop()
 	return sentences[result_index]
 
+
+
+class MyCorpus(object):
+	def __init__(self, path):
+		self.path = path
+
+	def iter_files(self):
+		"""Walk through all files located under a root path."""
+		if os.path.isfile(self.path):
+		    yield path
+		elif os.path.isdir(self.path):
+		    for dirpath, _, filenames in os.walk(self.path):
+		        for f in filenames:
+		        	if f != '.DS_Store':
+		        		yield os.path.join(dirpath, f)
+		else:
+		    raise RuntimeError('Path %s is invalid' % self.path)
+
+	def __iter__(self):
+		for filepath in self.iter_files():
+			#store number of sentences of each revision
+			print(filepath)
+			for revision_json in smart_open(filepath):
+				yield revision_json
+
+corpus = MyCorpus('data/processed/')
+
 with smart_open('data/processed/input', 'a') as outputfile:
-	for line in smart_open('data/processed/processed_outputfile'):
+	for revision_json in corpus:
 		added_index = []
-		first_doc_dict = json.loads(line)
+		first_doc_dict = json.loads(revision_json)
 
 		deleted = first_doc_dict['deleted']
 		added = first_doc_dict['added']
@@ -169,6 +197,5 @@ with smart_open('data/processed/input', 'a') as outputfile:
 				outputfile.write('\n')
 				outputfile.write('Output ' +output_sent)
 				outputfile.write('\n')
-
 			
 
