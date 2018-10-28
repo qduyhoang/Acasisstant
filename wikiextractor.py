@@ -546,13 +546,13 @@ class Extractor(object):
         """
         url = get_url(self.id) #DOCUMENT ID
         for revision_count in range(len(revisions)):
-            revision_dict = {
-            'text': revisions[revision_count],
-            'categories': self.category[revision_count]
-            }
-            # revision_dict = '{"text": %s, "category": %s}\n' %(revisions[revision_count], self.category[revision_count])
-            # out.write(revision_dict)
-            out.write(json.dumps(revision_dict))
+            # revision_dict = {
+            # 'text': revisions[revision_count],
+            # 'categories': self.category[revision_count]
+            # }
+            # # revision_dict = '{"text": %s, "category": %s}\n' %(revisions[revision_count], self.category[revision_count])
+            # # out.write(revision_dict)
+            out.write(json.dumps(revisions[revision_count]))
             out.write('\n')
        
             
