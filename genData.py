@@ -7,7 +7,7 @@ from nltk.tokenize import sent_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
-from pprint import pprint
+from utils import iter_files
 import os
 
 from nltk import sent_tokenize
@@ -27,12 +27,7 @@ def findSimilarSentence(sentence, sentences):
 	return sentences[result_index]
 
 
-def iter_files(path):
-	"""Walk through all files located under a root path."""
-	for dirpath, _, filenames in os.walk(path):
-		for f in filenames:
-			if f != '.DS_Store':
-				yield os.path.join(dirpath, f)
+
 
 def getSentencePairs(filepath):
 	""" Tokenize each revision into sentences. Find pairs of sentences. """
