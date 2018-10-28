@@ -34,26 +34,26 @@ def iter_files(path):
 			if f != '.DS_Store':
 				yield os.path.join(dirpath, f)
 
-def getSentencePairs():
-	""" Walk through every files and tokenize each revision into sentences. Find pair of sentences. """
-	for file_num, file in enumerate(iter_files('data/')):
-		with smart_open(file, 'r') as f:
+def getSentencePairs(filepath):
+	""" Tokenize each revision into sentences. Find pairs of sentences. """
+	with smart_open(filepath, 'r') as f:
+		revision = f.readline().strip()
+		rev_num = 1
+		while rev_num < 10:
+			if rev_num == 1:
+				pre_sentences = sent_tokenize(revision)
+			else:
+				post_sentences = sent_tokenize(revision)
+				for orig_sent in pre_sentences:
+					yield [orig_sent, findSimilarSentence(orig_sent, post_sentences)]
+				pre_sentences = post_sentences
 			revision = f.readline().strip()
-			rev_num = 1
-			while rev_num < 10:
-				if rev_num == 1:
-					pre_sentences = sent_tokenize(revision)
-				else:
-					post_sentences = sent_tokenize(revision)
-					for orig_sent in pre_sentences:
-						yield [orig_sent, findSimilarSentence(orig_sent, post_sentences)]
-					pre_sentences = post_sentences
-				revision = f.readline().strip()
-				rev_num += 1
+			rev_num += 1
 
 
-with smart_open('orig', 'a') as orig_file, smart_open('mod', 'a') as mod_file :
-	for orig_sent, mod_sent in getSentencePairs():
+
+with smart_open('data/raw_sent_pair/in_sent/in', 'a') as orig_file, smart_open('data/raw_sent_pair/out_sent/out', 'a') as mod_file :
+	for orig_sent, mod_sent in getSentencePairs('data/wiki_01'):
 		orig_file.write(orig_sent+'\n')
 		mod_file.write(mod_sent+'\n')
 
