@@ -13,44 +13,108 @@ from nltk import sent_tokenize
 
 from diff_match_patch import diff_match_patch, patch_obj
 
-tfidf = TfidfVectorizer()
+
+class SentencePairer:
+	"""
+	file_path: path of the directory containing revisions
+	"""
+	def __init__(self, file_path):
+		self.filepath = file_path
+		self.tfidf = TfidfVectorizer()
+		self.diff = diff_match_patch()
 
 
-def findSimilarSentence(sentence, sentences):
-	sentence = [sentence]
-	sentence_tfidf = tfidf.fit(sentences).transform(sentence)
-	sentences_tfidf = tfidf.fit_transform(sentences)
+	def findSimilarSentence(self, sentence, sentences):
+		sentence = [sentence]
+		sentence_tfidf = self.tfidf.fit(sentences).transform(sentence)
+		sentences_tfidf = self.tfidf.fit_transform(sentences)
 
-	cosine_similarities = linear_kernel(sentence_tfidf, sentences_tfidf).flatten()
-	related_product_indices = cosine_similarities.argsort()
-	result_index = list(related_product_indices).pop()
-	return sentences[result_index]
-
-
+		cosine_similarities = linear_kernel(sentence_tfidf, sentences_tfidf).flatten()
+		related_product_indices = cosine_similarities.argsort()
+		result_index = list(related_product_indices).pop()
+		return sentences[result_index]
 
 
-def getSentencePairs(filepath):
-	""" Tokenize each revision into sentences. Find pairs of sentences. """
-	with smart_open(filepath, 'r') as f:
-		revision = f.readline().strip()
-		rev_num = 1
-		while revision:
-			if rev_num == 1:
-				pre_sentences = sent_tokenize(revision)
-			else:
-				post_sentences = sent_tokenize(revision)
-				for orig_sent in pre_sentences:
-					yield [orig_sent, findSimilarSentence(orig_sent, post_sentences)]
-				pre_sentences = post_sentences
+
+
+	def getSentencePairs(self):
+		""" Tokenize each revision into sentences. Find pairs of sentences. """
+		with smart_open(self.filepath, 'r') as f:
 			revision = f.readline().strip()
-			rev_num += 1
+			rev_num = 1
+			while revision:
+				if rev_num == 1:
+					input_sentences = sent_tokenize(revision)
+				else:
+					target_sentences = sent_tokenize(revision)
+					for input_sent in input_sentences:
+						yield [input_sent, self.findSimilarSentence(input_sent, target_sentences)]
+					input_sentences = target_sentences
+				revision = f.readline().strip()
+				rev_num += 1
+
+
+	def classifyPairs(self):
+		ignore = False
+		label = ""
+		for input_sent, target_sent in self.getSentencePairs():
+			diffs = self.diff.diff_main(input_sent, target_sent)
+			edit_distance = self.diff.diff_levenshtein(diffs)
+			print(edit_distance)
+			if edit_distance == 0 or edit_distance > 100:
+				ignore = True
+			elif edit_distance <= 4:
+				label = "fluency"
+			elif edit_distance > 4: # edit_distance > 100 || edit_distance = 0 => ignore
+				label = "factual"
+			if not ignore:
+				yield [label, input_sent, target_sent]
+
+				
+
+
+	def savePairsToDir(self, directory):
+		if not os.path.exists(directory+"/fluency"):
+			os.makedirs(directory+"/fluency")
+		if not os.path.exists(directory+"/factual"):
+			os.makedirs(directory+"/factual")
+
+		fluency_file_num = 0
+		factual_file_num = 0 
+		fluency_line_ctr = 0
+		factual_line_ctr = 0
+
+		fluency_f = open("%s/fluency/pairs_%d" %(directory, fluency_file_num), "a")
+		factual_f = open("%s/factual/pairs_%d" %(directory, factual_file_num), "a")
+
+		for label, input_sent, target_sent in self.classifyPairs():
+			content = input_sent + "\t" + target_sent + "\n"
+			if label == "fluency":
+				fluency_f.write(content)
+				fluency_line_ctr += 1
+			elif label == "factual":
+				factual_f.write(content)
+				factual_line_ctr += 1
+
+			if (fluency_line_ctr % 100 == 0):  #Write to a new file after every 100 line
+				fluency_f.close()
+				fluency_file_num += 1
+				fluency_f = open("%s/fluency/pairs_%d" %(directory, fluency_file_num), "a")
+			elif (factual_line_ctr % 100 == 0):
+				factual_f.close()
+				factual_file_num += 1
+				factual_f = open("%s/factual/pairs_%d" %(directory, factual_file_num), "a")
+
+		fluency_f.close()
+		factual_f.close()
+
+if __name__ == "__main__":
+	pairer = SentencePairer("data/wiki_01")
+	pairer.savePairsToDir("data/raw_sent_pair")
+
+				
 
 
 
-with smart_open('data/raw_sent_pair/in_sent/in', 'a') as orig_file, smart_open('data/raw_sent_pair/out_sent/out', 'a') as mod_file :
-	Diff = diff_match_patch()
-	for orig_sent, mod_sent in getSentencePairs('data/wiki_01'):
-		diffs = Diff.diff_main(orig_sent, mod_sent)
-		if len(diffs) != 1:
-			orig_file.write(orig_sent+'\n')
-			mod_file.write(mod_sent+'\n')
+
+	

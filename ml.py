@@ -1,3 +1,4 @@
+#https://github.com/keras-team/keras/blob/master/examples/lstm_seq2seq.py
 from keras.models import Model
 from keras.layers import Input, LSTM, Dense
 import numpy as np
@@ -8,29 +9,28 @@ latent_dim = 256 #Latent dimensionality of the encoding space
 num_samples = 10000 #Number of samples to train on
 
 #Path to the data txt file on disk.
-input_data_path = 'data/raw_sent_pair/in_sent/in'
-target_data_path = 'data/raw_sent_pair/out_sent/out'
+data_path = 'data/raw_sent_pair/in_sent/in'
 
 #Vectorize the data.
 input_texts = []
 target_texts = []
 input_characters = set()
 target_characters = set()
-with open(input_data_path, 'r', encoding='utf-8') as input_file, open(target_data_path, 'r', encoding='utf-8') as target_file:
-	input_text = input_file.readline().strip()
-	target_text = target_file.readline().strip()
-	while input_text:
-		#We use "tab" as the "start sequence" character 
-		# for the targets, and "\n" as "end sequence" character.
-		target_text = '\t' + target_text + '\n'
-		input_texts.append(input_text)
-		target_texts.append(target_text)
-		for char in input_text:
-			if char not in input_characters:
-				input_characters.add(char)
-		for char in target_text:
-			if char not in target_characters:
-				target_characters.add(char)
+with open(data_path, 'r', encoding='utf-8') as f:
+	lines = f.read().split('\n')
+for line in lines[: min(num_samples, len(lines) - 1)]:
+	input_text, target_text = line.split('\t')
+	#We use "tab" as the "start sequence" character 
+	# for the targets, and "\n" as "end sequence" character.
+	target_text = '\t' + target_text + '\n'
+	input_texts.append(input_text)
+	target_texts.append(target_text)
+	for char in input_text:
+		if char not in input_characters:
+			input_characters.add(char)
+	for char in target_text:
+		if char not in target_characters:
+			target_characters.add(char)
 
 input_characters = sorted(list(input_characters))
 target_characters = sorted(list(target_characters))
