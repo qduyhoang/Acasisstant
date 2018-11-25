@@ -16,8 +16,10 @@ with open(INPUT_SENTS_DIR, 'r') as in_file, open(OUTPUT_SENTS_DIR, 'r') as out_f
 	while in_sent and out_sent:
 		diffs = Diff.diff_main(in_sent, out_sent)
 
-		if (len(diffs) != 1 and len(diffs) <= len(in_sent)):
-			pp.pprint(diffs)
+
+		if len(diffs) != 1:
+			print("insent", in_sent)
+			print("outsent", out_sent)
 
 		#Proceed to the next pair
 		in_sent = in_file.readline().strip()
