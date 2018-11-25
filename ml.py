@@ -2,6 +2,7 @@
 from keras.models import Model
 from keras.layers import Input, LSTM, Dense
 import numpy as np
+import utils
 
 batch_size = 64 #Batch size for training
 epochs = 2 #Number of epochs to train for.
@@ -9,28 +10,30 @@ latent_dim = 256 #Latent dimensionality of the encoding space
 num_samples = 10000 #Number of samples to train on
 
 #Path to the data txt file on disk.
-data_path = 'data/raw_sent_pair/in_sent/in'
+data_path = 'data/raw_sent_pair/fluency/'
 
 #Vectorize the data.
 input_texts = []
 target_texts = []
 input_characters = set()
 target_characters = set()
-with open(data_path, 'r', encoding='utf-8') as f:
-	lines = f.read().split('\n')
-for line in lines[: min(num_samples, len(lines) - 1)]:
-	input_text, target_text = line.split('\t')
-	#We use "tab" as the "start sequence" character 
-	# for the targets, and "\n" as "end sequence" character.
-	target_text = '\t' + target_text + '\n'
-	input_texts.append(input_text)
-	target_texts.append(target_text)
-	for char in input_text:
-		if char not in input_characters:
-			input_characters.add(char)
-	for char in target_text:
-		if char not in target_characters:
-			target_characters.add(char)
+
+for file in utils.iter_files(data_path):
+	with open(file, 'r') as f:
+		lines = f.read().split('\n')
+	for line in lines[: min(num_samples, len(lines) - 1)]:
+		input_text, target_text = line.split('\t')
+		#We use "tab" as the "start sequence" character 
+		# for the targets, and "\n" as "end sequence" character.
+		target_text = '\t' + target_text + '\n'
+		input_texts.append(input_text)
+		target_texts.append(target_text)
+		for char in input_text:
+			if char not in input_characters:
+				input_characters.add(char)
+		for char in target_text:
+			if char not in target_characters:
+				target_characters.add(char)
 
 input_characters = sorted(list(input_characters))
 target_characters = sorted(list(target_characters))
@@ -57,6 +60,10 @@ decoder_input_data = np.zeros(
 	(len(input_texts), max_decoder_seq_length, num_decoder_tokens), 
 	dtype='float32')
 
+decoder_target_data = np.zeros(
+    (len(input_texts), max_decoder_seq_length, num_decoder_tokens),
+    dtype='float32')
+
 for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
 	for t, char in enumerate(input_text):
 		encoder_input_data[i, t, input_token_index[char]] = 1.
@@ -71,7 +78,7 @@ for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
 
 
 #Define an input sequence and process it
-encoder_input = Input(shape=(None, num_encoder_tokens))
+encoder_inputs = Input(shape=(None, num_encoder_tokens))
 encoder = LSTM(latent_dim, return_state=True)
 encoder_outputs, state_h, state_c = encoder(encoder_inputs)
 #We discard 'encoder_outputs' and only keep the states.
@@ -109,12 +116,19 @@ encoder_model = Model(encoder_inputs, encoder_states)
 decoder_state_input_h = Input(shape=(latent_dim,))
 decoder_state_input_c = Input(shape=(latent_dim,))
 decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
-decoder_outputs, state_h, state_c = decoder_lstm(decoder_inputs, intial_state=decoder_states_inputs)
+decoder_outputs, state_h, state_c = decoder_lstm(decoder_inputs, initial_state=decoder_states_inputs)
 decoder_states = [state_h, state_c]
 decoder_outputs = decoder_dense(decoder_outputs)
 decoder_model = Model(
 	[decoder_inputs] + decoder_states_inputs,
 	[decoder_outputs] + decoder_states)
+
+# Reverse-lookup token index to decode sequence back to 
+# something readable
+reverse_input_char_index = dict(
+	(i, char) for char, i in input_token_index.items())
+reverse_target_char_index = dict(
+	(i, char) for char, i in target_token_index.items())
 
 def decode_sequence(input_seq):
 	#Encode the input as state vectors

@@ -55,12 +55,11 @@ class SentencePairer:
 
 
 	def classifyPairs(self):
-		ignore = False
 		label = ""
 		for input_sent, target_sent in self.getSentencePairs():
+			ignore = False
 			diffs = self.diff.diff_main(input_sent, target_sent)
 			edit_distance = self.diff.diff_levenshtein(diffs)
-			print(edit_distance)
 			if edit_distance == 0 or edit_distance > 100:
 				ignore = True
 			elif edit_distance <= 4:
@@ -90,6 +89,7 @@ class SentencePairer:
 		for label, input_sent, target_sent in self.classifyPairs():
 			content = input_sent + "\t" + target_sent + "\n"
 			if label == "fluency":
+				print(content)
 				fluency_f.write(content)
 				fluency_line_ctr += 1
 			elif label == "factual":
